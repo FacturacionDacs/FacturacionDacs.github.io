@@ -55,7 +55,9 @@
         .cart-item-actions .btn-icon-edit { color: #3b82f6; }
         .cart-item-actions .btn-icon-delete { color: #dc2626; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-        .modal-content { background: white; border-radius: 32px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 28px; }
+        .modal-content { background: white; border-radius: 32px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; padding: 28px; }
+        .modal-content .table-wrapper { overflow-x: auto; max-height: 60vh; }
+        .modal-content table { min-width: 800px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
         .btn-icon { padding: 6px 10px; margin: 0 2px; background: transparent; border: none; cursor: pointer; font-size: 1.2rem; }
         .btn-icon-edit { color: #3b82f6; }
@@ -84,11 +86,36 @@
         .forgot-link { text-align: center; margin-top: 15px; font-size: 0.9rem; cursor: pointer; color: #1e3c72; text-decoration: underline; }
         .radio-group { display: flex; gap: 20px; margin: 15px 0; }
         .radio-group label { font-weight: normal; margin-left: 5px; }
-        /* Botón re-dispensar siempre visible */
         .btn-redispensar { background-color: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
         .btn-redispensar:hover { background-color: #0284c7; }
         #historialEntregasTable td:last-child button { background-color: #0ea5e9; border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
         #historialEntregasTable td:last-child button:hover { background-color: #0284c7; }
+        /* Estilo mejorado para el botón seleccionar en el modal de búsqueda */
+        .btn-select-product {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 28px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-select-product:hover {
+            background-color: #059669;
+            transform: scale(1.02);
+        }
+        .clickable-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .clickable-row:hover {
+            background-color: #eef2ff !important;
+        }
     </style>
 </head>
 <body>
@@ -150,6 +177,7 @@
                 <button class="btn-danger" id="btnBajoStockInv">⚠️ Bajo stock</button>
                 <button class="btn-secondary" id="exportInventarioBtn">Exportar Excel</button>
                 <button class="btn-success" id="importInventarioBtn">Importar Excel</button>
+                <button class="btn-info" id="downloadTemplateBtn" style="background:#0ea5e9; color:white; border:none; padding:10px 16px; border-radius:28px; cursor:pointer;"><i class="fas fa-download"></i> Descargar Plantilla</button>
             </div>
             <div class="table-wrapper"><table id="inventoryTable"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Existencia</th><th>Stock Mínimo</th><th>Vencimiento</th><th>Estante</th><th>Lote</th><th>Registro INVIMA</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
         </div>
@@ -492,13 +520,58 @@
         document.getElementById("movEstante").value = "";
     }
 
+    // Modal de búsqueda de producto con botón "Seleccionar" visible y atractivo
     function openProductSearchModal() {
         const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-search"></i> Buscar producto</h3><input type="text" id="searchProductInput" placeholder="🔎 Código o descripción..." style="width:100%; margin-bottom:16px; padding:12px; border-radius:28px; border:1px solid #cbd5e1;"><div class="table-wrapper"><table id="searchProductTable" style="min-width:500px;"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Stock</th><th>Vencimiento</th><th>Estante</th><th></th></tr></thead><tbody></tbody></table></div><div style="margin-top:16px; text-align:right;"><button class="btn-outline" id="closeSearchModal">Cerrar</button></div></div>`;
+        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-search"></i> Buscar producto</h3><input type="text" id="searchProductInput" placeholder="🔎 Código o descripción..." style="width:100%; margin-bottom:16px; padding:12px; border-radius:28px; border:1px solid #cbd5e1;"><div class="table-wrapper"><table id="searchProductTable" style="min-width:900px; width:100%;"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Stock</th><th>Vencimiento</th><th>Estante</th><th>Acción</th></tr></thead><tbody></tbody></table></div><div style="margin-top:16px; text-align:right;"><button class="btn-outline" id="closeSearchModal">Cerrar</button></div></div>`;
         document.body.appendChild(modal);
         const tbody = modal.querySelector("#searchProductTable tbody");
-        function renderSearch(term) { const inv = getInventory(); const filtered = inv.filter(p=>p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)); tbody.innerHTML = filtered.map(p=>`<tr><td>${p.codigo}</td><td>${p.descripcion}</td><td>${p.tipoProducto}</td><td>${p.existencia}</td><td>${p.vencimiento||"N/A"}</td><td>${p.estante||"-"}</td><td><button class="btn-secondary btn-icon" data-cod="${p.codigo}">Seleccionar</button></td></tr>`).join(''); modal.querySelectorAll("[data-cod]").forEach(btn=>{ btn.onclick = () => { const cod = btn.getAttribute("data-cod"); const prod = getInventory().find(p=>p.codigo===cod); if(prod){ document.getElementById("movCodigo").value = prod.codigo; document.getElementById("movDescripcion").value = prod.descripcion; document.getElementById("movExistencia").value = prod.existencia; document.getElementById("movStockMinimo").value = prod.stockMinimo; document.getElementById("movTipoProducto").value = prod.tipoProducto; document.getElementById("movLote").value = prod.lote||""; document.getElementById("movRegistroInvima").value = prod.registroInvima||""; document.getElementById("movVencimiento").value = prod.vencimiento||""; document.getElementById("movEstante").value = prod.estante||""; modal.remove(); } }; }); }
-        const input = modal.querySelector("#searchProductInput"); input.addEventListener("input", e=> renderSearch(e.target.value.toLowerCase())); renderSearch("");
+        
+        function renderSearch(term) { 
+            const inv = getInventory(); 
+            const filtered = inv.filter(p=>p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)); 
+            tbody.innerHTML = filtered.map(p => `
+                <tr class="clickable-row" data-cod="${p.codigo}">
+                    <td>${p.codigo}</td>
+                    <td>${p.descripcion}</td>
+                    <td>${p.tipoProducto}</td>
+                    <td>${p.existencia}</td>
+                    <td>${p.vencimiento || "N/A"}</td>
+                    <td>${p.estante || "-"}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-select-product" data-cod="${p.codigo}">
+                            <i class="fas fa-check-circle"></i> Seleccionar
+                        </button>
+                    </td>
+                </tr>
+            `).join(''); 
+        }
+        
+        // Delegación de eventos para selección (clic en fila o en botón)
+        tbody.addEventListener('click', (e) => {
+            let targetRow = e.target.closest('tr');
+            if(!targetRow) return;
+            const cod = targetRow.getAttribute('data-cod');
+            if(cod) {
+                const prod = getInventory().find(p => p.codigo === cod);
+                if(prod) {
+                    document.getElementById("movCodigo").value = prod.codigo;
+                    document.getElementById("movDescripcion").value = prod.descripcion;
+                    document.getElementById("movExistencia").value = prod.existencia;
+                    document.getElementById("movStockMinimo").value = prod.stockMinimo;
+                    document.getElementById("movTipoProducto").value = prod.tipoProducto;
+                    document.getElementById("movLote").value = prod.lote || "";
+                    document.getElementById("movRegistroInvima").value = prod.registroInvima || "";
+                    document.getElementById("movVencimiento").value = prod.vencimiento || "";
+                    document.getElementById("movEstante").value = prod.estante || "";
+                    modal.remove();
+                }
+            }
+        });
+        
+        const input = modal.querySelector("#searchProductInput"); 
+        input.addEventListener("input", e => renderSearch(e.target.value.toLowerCase())); 
+        renderSearch("");
         modal.querySelector("#closeSearchModal").onclick = () => modal.remove();
     }
 
@@ -727,7 +800,7 @@
 
     // ==================== CONFIGURACIÓN ====================
     function openConfigModal() {
-        // AHORA CUALQUIER USUARIO PUEDE ACCEDER A LA CONFIGURACIÓN (YA NO SE RESTRINGE SOLO A ADMIN/ROOT)
+        // Cualquier usuario puede acceder (ya no hay restricción)
         const modal = document.createElement("div"); modal.className = "modal";
         modal.innerHTML = `<div class="modal-content"><h3>Configuración del Sistema</h3>
             <div class="config-list"><h4>📌 Áreas / Servicios</h4><div id="areasList"></div><div class="add-item"><input type="text" id="newArea" placeholder="Nueva área"><button class="btn-secondary" id="addAreaBtn">+ Agregar</button></div></div>
@@ -846,26 +919,85 @@
         XLSX.utils.book_append_sheet(wb, ws, "Datos");
         XLSX.writeFile(wb, filename + ".xlsx");
     }
+    
+    // Importación flexible de inventario (tolera cualquier orden de columnas)
     async function importInventoryFromExcel(file) { 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = e => {
                 const wb = XLSX.read(e.target.result, { type: 'array' });
-                const sheet = wb.Sheets["Inventario"];
-                if(sheet) {
-                    const data = XLSX.utils.sheet_to_json(sheet);
-                    const medicamentos = data.filter(p => p.tipoProducto === "Medicamento");
-                    const insumos = data.filter(p => p.tipoProducto === "Insumo");
-                    localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(medicamentos));
-                    localStorage.setItem(STORAGE_INSUMOS, JSON.stringify(insumos));
-                    renderInventory(); renderMovementsTable(); renderDashboard();
-                    resolve();
-                } else reject("Hoja 'Inventario' no encontrada");
+                let sheet = wb.Sheets["Inventario"] || wb.Sheets[wb.SheetNames[0]];
+                if(!sheet) reject("No se encontró ninguna hoja de datos");
+                const data = XLSX.utils.sheet_to_json(sheet);
+                if(!data.length) reject("El archivo no contiene datos");
+                const columnMapping = {
+                    codigo: ["codigo", "código", "code", "cod"],
+                    descripcion: ["descripcion", "descripción", "description", "desc"],
+                    tipoProducto: ["tipoproducto", "tipo", "type"],
+                    existencia: ["existencia", "stock", "cantidad", "quantity"],
+                    stockMinimo: ["stockminimo", "minimo", "minstock", "stock_min"],
+                    vencimiento: ["vencimiento", "expiry", "fecha_venc", "expiration"],
+                    estante: ["estante", "shelf", "rack"],
+                    lote: ["lote", "batch", "lot"],
+                    registroInvima: ["registroinvima", "invima", "reginvima", "registro"]
+                };
+                function findField(obj, possibleNames) {
+                    for(let name of possibleNames) {
+                        if(obj.hasOwnProperty(name)) return obj[name];
+                        const lowerKey = Object.keys(obj).find(k => k.toLowerCase() === name.toLowerCase());
+                        if(lowerKey) return obj[lowerKey];
+                    }
+                    return undefined;
+                }
+                const productosImportados = [];
+                for(let row of data) {
+                    const codigo = findField(row, columnMapping.codigo);
+                    if(!codigo) continue;
+                    const descripcion = findField(row, columnMapping.descripcion) || "Sin descripción";
+                    let tipoProducto = findField(row, columnMapping.tipoProducto);
+                    if(!tipoProducto || (tipoProducto !== "Medicamento" && tipoProducto !== "Insumo")) tipoProducto = "Medicamento";
+                    let existencia = parseFloat(findField(row, columnMapping.existencia));
+                    if(isNaN(existencia)) existencia = 0;
+                    let stockMinimo = parseFloat(findField(row, columnMapping.stockMinimo));
+                    if(isNaN(stockMinimo)) stockMinimo = 0;
+                    let vencimiento = findField(row, columnMapping.vencimiento) || "";
+                    const estante = findField(row, columnMapping.estante) || "";
+                    const lote = findField(row, columnMapping.lote) || "";
+                    const registroInvima = findField(row, columnMapping.registroInvima) || "";
+                    let fechaFormateada = "";
+                    if(vencimiento) {
+                        if(typeof vencimiento === 'number') {
+                            const date = XLSX.SSF.parse_date_code(vencimiento);
+                            fechaFormateada = `${date.y}-${String(date.m).padStart(2,'0')}-${String(date.d).padStart(2,'0')}`;
+                        } else {
+                            fechaFormateada = vencimiento;
+                        }
+                    }
+                    productosImportados.push({
+                        codigo: String(codigo).trim(),
+                        descripcion: String(descripcion).trim(),
+                        tipoProducto,
+                        existencia: Math.floor(existencia),
+                        stockMinimo: Math.floor(stockMinimo),
+                        vencimiento: fechaFormateada,
+                        estante: String(estante).trim(),
+                        lote: String(lote).trim(),
+                        registroInvima: String(registroInvima).trim()
+                    });
+                }
+                if(productosImportados.length === 0) reject("No se pudo leer ningún producto válido");
+                const medicamentos = productosImportados.filter(p => p.tipoProducto === "Medicamento");
+                const insumos = productosImportados.filter(p => p.tipoProducto === "Insumo");
+                localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(medicamentos));
+                localStorage.setItem(STORAGE_INSUMOS, JSON.stringify(insumos));
+                renderInventory(); renderMovementsTable(); renderDashboard();
+                resolve();
             };
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
         });
     }
+
     async function importMovementsFromExcel(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -882,6 +1014,17 @@
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
         });
+    }
+
+    function downloadInventoryTemplate() {
+        const template = [
+            { Código: "MED001", Descripción: "Paracetamol 500mg", TipoProducto: "Medicamento", Existencia: 100, StockMínimo: 20, Vencimiento: "2025-12-31", Estante: "A1", Lote: "L123", RegistroInvima: "INV2023-001" },
+            { Código: "INS001", Descripción: "Jeringa 10ml", TipoProducto: "Insumo", Existencia: 500, StockMínimo: 100, Vencimiento: "2027-01-01", Estante: "B2", Lote: "LJ10", RegistroInvima: "INV2023-002" }
+        ];
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+        XLSX.writeFile(wb, "plantilla_inventario_farmacia.xlsx");
     }
 
     // ==================== INICIALIZACIÓN Y LOGIN ====================
@@ -915,7 +1058,8 @@
         document.getElementById("btnBajoStockInv").onclick = () => { const inv = getInventory(); const bajo = inv.filter(p => p.existencia <= p.stockMinimo); if(bajo.length) renderInventory(bajo); else alert("No hay productos con bajo stock"); };
         document.getElementById("setExpiryDaysBtn").onclick = () => setExpiryDays(parseInt(document.getElementById("expiryDaysInput").value));
         document.getElementById("exportInventarioBtn").onclick = () => exportToExcel(getInventory(), "inventario_completo");
-        document.getElementById("importInventarioBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importInventoryFromExcel(e.target.files[0]); alert("Inventario importado"); } }; input.click(); };
+        document.getElementById("importInventarioBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importInventoryFromExcel(e.target.files[0]); alert("Inventario importado correctamente"); } }; input.click(); };
+        document.getElementById("downloadTemplateBtn").onclick = downloadInventoryTemplate;
         document.getElementById("addProductBtn").onclick = addOrUpdateProduct;
         document.getElementById("cancelEditBtn").onclick = cancelEditProduct;
         document.getElementById("registrarMovBtn").onclick = async () => { try { const cod = document.getElementById("movCodigo").value.trim(); if(!cod) throw new Error("Código obligatorio"); const cantidad = parseInt(document.getElementById("movCantidad").value); if(isNaN(cantidad) || cantidad <= 0) throw new Error("Cantidad válida > 0"); await registrarMovimiento({ codigo:cod, cantidad:cantidad, tipo:document.getElementById("movTipo").value, descripcion:document.getElementById("movDescripcion").value, tipoProducto:document.getElementById("movTipoProducto").value, lote:document.getElementById("movLote").value, registroInvima:document.getElementById("movRegistroInvima").value, vencimiento:document.getElementById("movVencimiento").value, estante:document.getElementById("movEstante").value, stockMinimo:parseInt(document.getElementById("movStockMinimo").value)||0 }); alert("Movimiento registrado exitosamente"); limpiarFormularioMovimiento(); renderInventory(); renderMovementsTable(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } };
