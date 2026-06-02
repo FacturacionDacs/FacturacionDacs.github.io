@@ -88,34 +88,15 @@
         .radio-group label { font-weight: normal; margin-left: 5px; }
         .btn-redispensar { background-color: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
         .btn-redispensar:hover { background-color: #0284c7; }
-        #historialEntregasTable td:last-child button { background-color: #0ea5e9; border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
-        #historialEntregasTable td:last-child button:hover { background-color: #0284c7; }
-        /* Estilo mejorado para el botón seleccionar en el modal de búsqueda */
-        .btn-select-product {
-            background-color: #10b981;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 28px;
-            cursor: pointer;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-            font-size: 0.9rem;
-        }
-        .btn-select-product:hover {
-            background-color: #059669;
-            transform: scale(1.02);
-        }
-        .clickable-row {
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .clickable-row:hover {
-            background-color: #eef2ff !important;
-        }
+        .btn-select-product { background-color: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 28px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
+        .clickable-row:hover { background-color: #eef2ff !important; }
+        .round-input { border-radius: 40px !important; }
+        .proveedor-tag { background: white; border-radius: 40px; padding: 4px 12px; margin: 4px; display: inline-block; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .autocomplete-container { position: relative; width: 100%; }
+        .autocomplete-input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.9rem; outline: none; }
+        .autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 20px; max-height: 250px; overflow-y: auto; z-index: 1000; list-style: none; margin: 0; padding: 0; }
+        .autocomplete-suggestions li { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #e2e8f0; }
+        .autocomplete-suggestions li:hover { background-color: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -139,85 +120,53 @@
         <button class="tab-btn" data-tab="inventario">📦 Inventario</button>
         <button class="tab-btn" data-tab="movimientos">🔄 Movimientos</button>
         <button class="tab-btn" data-tab="entregas">💊 Entrega por Área</button>
+        <button class="tab-btn" data-tab="entradasProveedor">📥 Entradas por Proveedor</button>
         <button class="tab-btn" data-tab="historialEntregas">📜 Historial Entregas</button>
         <button class="tab-btn" data-tab="reportes">📊 Reportes</button>
         <button class="tab-btn" data-tab="usuarios">👥 Usuarios</button>
-        <button class="tab-btn" data-tab="licencia" id="licenciaTabBtn" style="display: none;">🔐 Licencia</button>
+        <button class="tab-btn" id="licenciaTabBtn" style="display: none;">🔐 Licencia</button>
     </div>
 
     <!-- Dashboard -->
     <div id="tabDashboard" class="tab-content active">
-        <div class="card">
-            <h3><i class="fas fa-chart-simple"></i> Panel de Control - Indicadores Clave</h3>
-            <div class="dashboard-kpi" id="kpiContainer"></div>
-            <div class="dashboard-charts">
-                <div class="chart-box"><canvas id="tipoChart" width="400" height="250"></canvas><p class="kpi-label" style="text-align:center;">Distribución por tipo</p></div>
-                <div class="chart-box"><canvas id="topEntregasChart" width="400" height="250"></canvas><p class="kpi-label" style="text-align:center;">Top 5 productos más entregados</p></div>
-                <div class="chart-box"><canvas id="topDestinatariosChart" width="400" height="250"></canvas><p class="kpi-label" style="text-align:center;">Top 5 destinatarios que más reciben</p></div>
-            </div>
-            <div class="dashboard-kpi" style="justify-content: space-between;">
-                <div class="kpi-card"><div class="kpi-number" id="masEntregadoProd">-</div><div class="kpi-label">Producto más entregado</div></div>
-                <div class="kpi-card"><div class="kpi-number" id="masVencidoProd">-</div><div class="kpi-label">Producto más vencido (existencia vencida)</div></div>
-                <div class="kpi-card"><div class="kpi-number" id="stockCriticoProd">-</div><div class="kpi-label">Producto con stock más crítico</div></div>
-            </div>
-            <div class="dashboard-tables"><h4>📋 Últimas entregas realizadas</h4><div class="table-wrapper" style="max-height: 300px;"><table id="ultimasEntregasTable"><thead>运转<th>Fecha</th><th>Área</th><th>Destinatario</th><th>Productos</th><th>Cantidad total</th></tr></thead><tbody></tbody></table></div></div>
-        </div>
+        <div class="card"><h3><i class="fas fa-chart-simple"></i> Panel de Control</h3><div class="dashboard-kpi" id="kpiContainer"></div>
+        <div class="dashboard-charts"><div class="chart-box"><canvas id="tipoChart"></canvas><p style="text-align:center;">Distribución por tipo</p></div><div class="chart-box"><canvas id="topEntregasChart"></canvas><p style="text-align:center;">Top 5 productos más entregados</p></div><div class="chart-box"><canvas id="topDestinatariosChart"></canvas><p style="text-align:center;">Top 5 destinatarios</p></div></div>
+        <div class="dashboard-kpi"><div class="kpi-card"><div class="kpi-number" id="masEntregadoProd">-</div><div class="kpi-label">Producto más entregado</div></div><div class="kpi-card"><div class="kpi-number" id="masVencidoProd">-</div><div class="kpi-label">Más vencido (existencia)</div></div><div class="kpi-card"><div class="kpi-number" id="stockCriticoProd">-</div><div class="kpi-label">Stock más crítico</div></div></div>
+        <div class="dashboard-tables"><h4>📋 Últimas entregas</h4><div class="table-wrapper"><table id="ultimasEntregasTable"><thead>运转<th>Fecha</th><th>Área</th><th>Destinatario</th><th>Productos</th><th>Cantidad</th></tr></thead><tbody></tbody></table></div></div></div>
     </div>
 
     <!-- Inventario -->
     <div id="tabInventario" class="tab-content">
-        <div class="card">
-            <div class="umbral-bar"><label>⚠️ Alertar vencimiento (días):</label><input type="number" id="expiryDaysInput" min="1" value="30" style="width:90px;"><button class="btn-secondary" id="setExpiryDaysBtn">Aplicar</button><span>🔴 Vencidos | 🟡 Stock bajo / Próximo venc.</span></div>
-            <div class="filter-bar">
-                <select id="invSearchType"><option value="codigo">Código</option><option value="descripcion">Descripción</option><option value="tipo">Tipo</option><option value="estante">Estante</option></select>
-                <input type="text" id="invSearchValue" placeholder="Buscar...">
-                <button class="btn-secondary" id="btnBuscarInv">Buscar</button>
-                <button class="btn-outline" id="btnLimpiarInv">Limpiar</button>
-                <button class="btn-warning" id="btnProximosVencer">📅 Próx. vencer</button>
-                <button class="btn-danger" id="btnBajoStockInv">⚠️ Bajo stock</button>
-                <button class="btn-secondary" id="exportInventarioBtn">Exportar Excel</button>
-                <button class="btn-success" id="importInventarioBtn">Importar Excel</button>
-                <button class="btn-info" id="downloadTemplateBtn" style="background:#0ea5e9; color:white; border:none; padding:10px 16px; border-radius:28px; cursor:pointer;"><i class="fas fa-download"></i> Descargar Plantilla</button>
-            </div>
-            <div class="table-wrapper"><table id="inventoryTable"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Existencia</th><th>Stock Mínimo</th><th>Vencimiento</th><th>Estante</th><th>Lote</th><th>Registro INVIMA</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
-        </div>
-        <div class="card">
-            <h3>Agregar / Editar Producto</h3>
-            <div class="form-grid">
-                <div class="form-field"><label>Código *</label><input type="text" id="prodCodigo"></div>
-                <div class="form-field"><label>Descripción *</label><input type="text" id="prodDescripcion"></div>
-                <div class="form-field"><label>Tipo</label><select id="prodTipo"><option>Medicamento</option><option>Insumo</option></select></div>
-                <div class="form-field"><label>Existencia</label><input type="number" id="prodExistencia" value="0"></div>
-                <div class="form-field"><label>Stock Mínimo</label><input type="number" id="prodStockMinimo" value="0"></div>
-                <div class="form-field"><label>Vencimiento</label><input type="date" id="prodVencimiento"></div>
-                <div class="form-field"><label>Estante</label><select id="prodEstante"></select></div>
-                <div class="form-field"><label>Lote</label><input type="text" id="prodLote" placeholder="Número de lote"></div>
-                <div class="form-field"><label>Registro INVIMA</label><input type="text" id="prodRegInvima" placeholder="Registro sanitario INVIMA"></div>
-            </div>
-            <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn-primary" id="addProductBtn">Agregar Producto</button>
-                <button class="btn-outline" id="cancelEditBtn" style="display: none;">Cancelar Edición</button>
-            </div>
-        </div>
+        <div class="card"><div class="umbral-bar"><label>⚠️ Alertar vencimiento (días):</label><input type="number" id="expiryDaysInput" min="1" class="round-input" style="width:100px;"><button class="btn-secondary" id="setExpiryDaysBtn">Aplicar</button><span>🔴 Vencidos | 🟡 Stock bajo / Próximo venc.</span></div>
+        <div class="filter-bar"><select id="invSearchType"><option value="codigo">Código</option><option value="descripcion">Descripción</option><option value="tipo">Tipo</option><option value="estante">Estante</option></select><input type="text" id="invSearchValue" placeholder="Buscar..."><button class="btn-secondary" id="btnBuscarInv">Buscar</button><button class="btn-outline" id="btnLimpiarInv">Limpiar</button><button class="btn-warning" id="btnProximosVencer">📅 Próx. vencer</button><button class="btn-danger" id="btnBajoStockInv">⚠️ Bajo stock</button><button class="btn-secondary" id="exportInventarioBtn">Exportar Excel</button><button class="btn-success" id="importInventarioBtn">Importar Excel</button><button class="btn-info" id="downloadTemplateBtn" style="background:#0ea5e9; color:white; border:none; padding:10px 16px; border-radius:28px;"><i class="fas fa-download"></i> Plantilla</button></div>
+        <div class="table-wrapper"><table id="inventoryTable"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Existencia</th><th>Stock Mínimo</th><th>Vencimiento</th><th>Estante</th><th>Lote</th><th>Registro INVIMA</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><h3>Agregar / Editar Producto</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="prodCodigo"></div><div class="form-field"><label>Descripción *</label><input type="text" id="prodDescripcion"></div><div class="form-field"><label>Tipo</label><select id="prodTipo"><option>Medicamento</option><option>Insumo</option></select></div><div class="form-field"><label>Existencia</label><input type="number" id="prodExistencia" value="0"></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="prodStockMinimo" value="0"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="prodVencimiento"></div><div class="form-field"><label>Estante</label><select id="prodEstante"></select></div><div class="form-field"><label>Lote</label><input type="text" id="prodLote"></div><div class="form-field"><label>Registro INVIMA</label><input type="text" id="prodRegInvima"></div></div><div style="display:flex; gap:12px;"><button class="btn-primary" id="addProductBtn">Agregar</button><button class="btn-outline" id="cancelEditBtn" style="display:none;">Cancelar</button></div></div>
     </div>
 
-    <!-- Movimientos (con destinatario y área) -->
-    <div id="tabMovimientos" class="tab-content"><div class="card"><h3>Registrar Movimiento</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="movCodigo"></div><div class="form-field"><label>Descripción</label><input type="text" id="movDescripcion"></div><div class="form-field"><label>Existencia actual</label><input type="text" id="movExistencia" readonly></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="movStockMinimo"></div><div class="form-field"><label>Tipo Movimiento</label><select id="movTipo"></select></div><div class="form-field"><label>Cantidad *</label><input type="number" id="movCantidad" min="1"></div><div class="form-field"><label>Tipo Producto</label><select id="movTipoProducto"></select></div><div class="form-field"><label>Lote</label><input id="movLote" placeholder="Lote"></div><div class="form-field"><label>Registro INVIMA</label><input id="movRegistroInvima" placeholder="Registro INVIMA"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="movVencimiento"></div><div class="form-field"><label>Estante</label><select id="movEstante"></select></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-primary" id="registrarMovBtn">Registrar</button><button class="btn-outline" id="limpiarFormBtn">Limpiar</button><button class="btn-secondary" id="buscarProductoBtn">🔍 Buscar producto (flotante)</button></div></div>
-        <div class="card"><h3>Historial de movimientos</h3><div style="display: flex; gap: 12px; margin-bottom: 16px;"><button class="btn-secondary" id="exportMovimientosBtn">Exportar Excel</button><button class="btn-success" id="importMovimientosBtn">Importar Excel</button></div><div class="table-wrapper"><table id="movimientosTable"><thead>运转<th>Fecha</th><th>Usuario</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Lote</th><th>Reg. Invima</th><th>Destinatario</th><th>Área</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div></div>
+    <!-- Movimientos (con proveedor) -->
+    <div id="tabMovimientos" class="tab-content"><div class="card"><h3>Registrar Movimiento</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="movCodigo"></div><div class="form-field"><label>Descripción</label><input type="text" id="movDescripcion"></div><div class="form-field"><label>Existencia actual</label><input type="text" id="movExistencia" readonly></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="movStockMinimo"></div><div class="form-field"><label>Tipo Movimiento</label><select id="movTipo"></select></div><div class="form-field"><label>Cantidad *</label><input type="number" id="movCantidad" min="1"></div><div class="form-field"><label>Tipo Producto</label><select id="movTipoProducto"></select></div><div class="form-field"><label>Lote</label><input id="movLote"></div><div class="form-field"><label>Registro INVIMA</label><input id="movRegistroInvima"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="movVencimiento"></div><div class="form-field"><label>Estante</label><select id="movEstante"></select></div><div class="form-field"><label>Proveedor (opcional)</label><select id="movProveedor"><option value="">-- Ninguno --</option></select></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-primary" id="registrarMovBtn">Registrar</button><button class="btn-outline" id="limpiarFormBtn">Limpiar</button><button class="btn-secondary" id="buscarProductoBtn">🔍 Buscar producto</button></div></div>
+        <div class="card"><h3>Historial de movimientos</h3><div style="display:flex; gap:12px; margin-bottom:16px;"><button class="btn-secondary" id="exportMovimientosBtn">Exportar Excel</button><button class="btn-success" id="importMovimientosBtn">Importar Excel</button></div><div class="table-wrapper"><table id="movimientosTable"><thead>运转<th>Fecha</th><th>Usuario</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Lote</th><th>Reg. Invima</th><th>Destinatario/Proveedor</th><th>Área</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><h3><i class="fas fa-truck"></i> Proveedores registrados</h3><div id="proveedoresListaMini" class="proveedor-tag" style="padding:12px;"></div><button class="btn-outline" id="abrirConfigProveedoresBtn" style="margin-top:8px;"><i class="fas fa-cog"></i> Gestionar proveedores</button></div>
+    </div>
 
-    <!-- Entregas (carrito con iconos editar/eliminar) -->
-    <div id="tabEntregas" class="tab-content"><div class="card"><h3><i class="fas fa-truck-medical"></i> Dispensación a Áreas / Pacientes</h3><p>Seleccione productos, ajuste cantidades, complete datos del receptor y realice la entrega. Se imprimirá un recibo automáticamente.</p></div>
-    <div class="card"><h4>1. Agregar productos al carrito</h4><div class="form-grid"><div class="form-field"><label>Producto</label><select id="selectProductoEntrega"><option value="">-- Seleccionar --</option></select></div><div class="form-field"><label>Cantidad</label><input type="number" id="cantidadEntrega" min="1" value="1"></div><div class="form-field"><label>Stock disponible</label><input type="text" id="stockDisponibleEntrega" readonly></div><div class="form-field" style="justify-content: flex-end; flex-direction: row; gap: 8px;"><button class="btn-primary" id="agregarAlCarritoBtn"><i class="fas fa-cart-plus"></i> Agregar</button><button class="btn-outline" id="limpiarFormularioEntregaBtn">Limpiar</button></div></div><div><h4>Carrito de entrega</h4><div id="cartContainer" style="max-height: 280px; overflow-y: auto; border:1px solid #e2e8f0; border-radius:20px; padding:12px; background: #f9fafb;"></div></div></div>
-    <div class="card"><h4>2. Datos del receptor</h4><div class="form-grid"><div class="form-field"><label>Área / Servicio *</label><select id="areaDestino"></select><input type="text" id="otroArea" placeholder="Especificar otra área" style="margin-top:8px; display:none;"></div><div class="form-field"><label>Nombre del paciente / responsable *</label><input type="text" id="nombreDestinatario" placeholder="Ej: María López"></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-success" id="confirmarEntregaBtn"><i class="fas fa-check-circle"></i> Realizar entrega e imprimir recibo</button><button class="btn-outline" id="limpiarCarritoBtn">Vaciar carrito</button></div></div></div>
+    <!-- Entregas por Área (con autocompletado) -->
+    <div id="tabEntregas" class="tab-content"><div class="card"><h3>💊 Dispensación a Áreas / Pacientes</h3><p>Busque el producto escribiendo, ajuste cantidad y agregue al carrito.</p></div>
+    <div class="card"><h4>1. Agregar productos al carrito</h4><div class="form-grid"><div class="form-field"><label>Producto</label><div class="autocomplete-container" id="autocompleteEntregaContainer"><input type="text" id="autocompleteEntregaInput" class="autocomplete-input" placeholder="Escriba código o descripción..."><ul id="autocompleteEntregaList" class="autocomplete-suggestions" style="display:none;"></ul></div></div><div class="form-field"><label>Cantidad</label><input type="number" id="cantidadEntrega" min="1" value="1"></div><div class="form-field"><label>Stock disponible</label><input type="text" id="stockDisponibleEntrega" readonly></div><div class="form-field"><button class="btn-primary" id="agregarAlCarritoBtn"><i class="fas fa-cart-plus"></i> Agregar</button><button class="btn-outline" id="limpiarFormularioEntregaBtn">Limpiar</button></div></div><div><h4>Carrito de entrega</h4><div id="cartContainer" style="max-height:280px; overflow-y:auto; border-radius:20px; padding:12px; background:#f9fafb;"></div></div></div>
+    <div class="card"><h4>2. Datos del receptor</h4><div class="form-grid"><div class="form-field"><label>Área / Servicio *</label><select id="areaDestino"></select><input type="text" id="otroArea" placeholder="Especificar otra área" style="margin-top:8px; display:none;"></div><div class="form-field"><label>Nombre del paciente / responsable *</label><input type="text" id="nombreDestinatario" placeholder="Ej: María López"></div></div><div style="display:flex; gap:12px;"><button class="btn-success" id="confirmarEntregaBtn"><i class="fas fa-check-circle"></i> Realizar entrega e imprimir recibo</button><button class="btn-outline" id="limpiarCarritoBtn">Vaciar carrito</button></div></div></div>
 
-    <!-- Historial Entregas (botón Re-dispensar siempre visible) -->
-    <div id="tabHistorialEntregas" class="tab-content"><div class="card"><h3>Historial de Entregas por Área</h3><div class="form-grid" style="margin-bottom:20px;"><div class="form-field"><label>Área</label><select id="filtroAreaHistorial"><option value="">Todas</option></select></div><div class="form-field"><label>Destinatario</label><input type="text" id="filtroDestinatarioHistorial"></div><div class="form-field"><label>Fecha desde</label><input type="date" id="filtroFechaDesdeHistorial"></div><div class="form-field"><label>Fecha hasta</label><input type="date" id="filtroFechaHastaHistorial"></div><div class="form-field"><button class="btn-secondary" id="aplicarFiltrosHistorial">Filtrar</button><button class="btn-outline" id="limpiarFiltrosHistorial">Limpiar</button></div></div><div class="table-wrapper"><table id="historialEntregasTable"><thead>运转<th>Fecha/Hora</th><th>Usuario</th><th>Área</th><th>Destinatario</th><th>Productos (Código - Cantidad)</th><th>Re-dispensar</th></tr></thead><tbody></tbody></table></div></div></div>
+    <!-- Entradas por Proveedor -->
+    <div id="tabEntradasProveedor" class="tab-content"><div class="card"><h3>📥 Registro de Entrada por Proveedor</h3><p>Seleccione productos, cantidades y el proveedor que los suministra. Al registrar se actualizará el inventario y se generará un comprobante.</p></div>
+    <div class="card"><h4>1. Productos a ingresar</h4><div class="form-grid"><div class="form-field"><label>Producto</label><div class="autocomplete-container" id="autocompleteEntradaContainer"><input type="text" id="autocompleteEntradaInput" class="autocomplete-input" placeholder="Código o descripción..."><ul id="autocompleteEntradaList" class="autocomplete-suggestions" style="display:none;"></ul></div></div><div class="form-field"><label>Cantidad a ingresar</label><input type="number" id="cantidadEntrada" min="1" value="1"></div><div class="form-field"><label>Stock actual</label><input type="text" id="stockActualEntrada" readonly></div><div class="form-field"><button class="btn-primary" id="agregarAlCarritoEntradaBtn"><i class="fas fa-plus-circle"></i> Agregar</button></div></div><div><h4>Carrito de entrada</h4><div id="cartEntradaContainer" style="max-height:280px; overflow-y:auto; border-radius:20px; padding:12px; background:#f9fafb;"></div></div></div>
+    <div class="card"><h4>2. Proveedor</h4><div class="form-grid"><div class="form-field"><label>Seleccione proveedor *</label><select id="proveedorDestino"></select></div><div class="form-field"><label>Número factura / referencia</label><input type="text" id="facturaReferencia" placeholder="Opcional"></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-success" id="confirmarEntradaBtn"><i class="fas fa-check-circle"></i> Registrar entrada e imprimir comprobante</button><button class="btn-outline" id="limpiarCarritoEntradaBtn">Vaciar carrito</button></div></div></div>
+
+    <!-- Historial Entregas -->
+    <div id="tabHistorialEntregas" class="tab-content"><div class="card"><h3>Historial de Entregas por Área</h3><div class="form-grid"><div class="form-field"><label>Área</label><select id="filtroAreaHistorial"><option value="">Todas</option></select></div><div class="form-field"><label>Destinatario</label><input type="text" id="filtroDestinatarioHistorial"></div><div class="form-field"><label>Fecha desde</label><input type="date" id="filtroFechaDesdeHistorial"></div><div class="form-field"><label>Fecha hasta</label><input type="date" id="filtroFechaHastaHistorial"></div><div class="form-field"><button class="btn-secondary" id="aplicarFiltrosHistorial">Filtrar</button><button class="btn-outline" id="limpiarFiltrosHistorial">Limpiar</button></div></div><div class="table-wrapper"><table id="historialEntregasTable"><thead>运转<th>Fecha/Hora</th><th>Usuario</th><th>Área</th><th>Destinatario</th><th>Productos</th><th>Re-dispensar</th></tr></thead><tbody></tbody></table></div></div></div>
 
     <!-- Reportes -->
     <div id="tabReportes" class="tab-content"><div class="card"><h3>Reportes</h3><div style="display:flex; gap:12px; flex-wrap:wrap;"><button class="btn-secondary" id="reporteInventarioBtn">📄 Inventario</button><button class="btn-secondary" id="reporteMovimientosBtn">📄 Movimientos</button><button class="btn-warning" id="reporteVencimientoBtn">⚠️ Próx. vencer</button><button class="btn-danger" id="reporteBajoStockBtn">⚠️ Bajo stock</button><button class="btn-success" id="reporteEntregasBtn">📄 Entregas</button></div></div></div>
 
     <!-- Usuarios -->
-    <div id="tabUsuarios" class="tab-content"><div class="card"><h3>Cambiar contraseña</h3><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="userActual" readonly></div><div class="form-field"><label>Contraseña actual</label><input type="password" id="pwdActual"></div><div class="form-field"><label>Nueva contraseña</label><input type="password" id="pwdNueva"></div><div class="form-field"><label>Confirmar</label><input type="password" id="pwdConfirm"></div></div><button class="btn-primary" id="cambiarPwdBtn">Cambiar contraseña</button></div><div class="card"><h3>Gestión de usuarios</h3><button class="btn-secondary" id="toggleUsersBtn">Ver / ocultar usuarios</button><div id="usersList" style="display:none; margin-top:16px;"><div class="table-wrapper"><table id="usersTable"><thead>运转<th>Usuario</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th><tr></thead><tbody id="usersTableBody"></tbody></table></div></div><div id="adminAddUser" style="display:none; margin-top:20px;"><h4>➕ Agregar usuario</h4><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="newUser"></div><div class="form-field"><label>Contraseña</label><input type="password" id="newPass"></div><div class="form-field"><label>Nombre completo</label><input id="newFullName"></div><div class="form-field"><label>Teléfono</label><input id="newPhone"></div><div class="form-field"><label>Email</label><input id="newEmail" type="email"></div><div class="form-field"><label>Rol</label><select id="newRole"><option>user</option><option>admin</option></select></div></div><button class="btn-secondary" id="addUserBtn">Crear usuario</button></div></div></div>
+    <div id="tabUsuarios" class="tab-content"><div class="card"><h3>Cambiar contraseña</h3><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="userActual" readonly></div><div class="form-field"><label>Contraseña actual</label><input type="password" id="pwdActual"></div><div class="form-field"><label>Nueva contraseña</label><input type="password" id="pwdNueva"></div><div class="form-field"><label>Confirmar</label><input type="password" id="pwdConfirm"></div></div><button class="btn-primary" id="cambiarPwdBtn">Cambiar contraseña</button></div><div class="card"><h3>Gestión de usuarios</h3><button class="btn-secondary" id="toggleUsersBtn">Ver / ocultar usuarios</button><div id="usersList" style="display:none; margin-top:16px;"><div class="table-wrapper"><table id="usersTable"><thead>运转<th>Usuario</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div></div><div id="adminAddUser" style="display:none;"><h4>➕ Agregar usuario</h4><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="newUser"></div><div class="form-field"><label>Contraseña</label><input type="password" id="newPass"></div><div class="form-field"><label>Nombre completo</label><input id="newFullName"></div><div class="form-field"><label>Teléfono</label><input id="newPhone"></div><div class="form-field"><label>Email</label><input id="newEmail"></div><div class="form-field"><label>Rol</label><select id="newRole"><option>user</option><option>admin</option></select></div></div><button class="btn-secondary" id="addUserBtn">Crear usuario</button></div></div></div>
 
     <!-- Licencia -->
     <div id="tabLicencia" class="tab-content"><div class="card"><h3>Licencia y respaldo</h3><div id="licenseInfo"></div><button class="btn-primary" id="renewLicenseBtn">Renovar licencia</button><hr><button class="btn-secondary" id="exportAllDataBtn">Exportar datos (JSON)</button><button class="btn-warning" id="resetDataBtn">Restablecer datos</button></div></div>
@@ -229,6 +178,7 @@
     const STORAGE_CONFIG_TIPOS_PRODUCTO = "app_config_tipos_producto";
     const STORAGE_CONFIG_TIPOS_MOV = "app_config_tipos_movimiento";
     const STORAGE_CONFIG_ESTANTES = "app_config_estantes";
+    const STORAGE_CONFIG_PROVEEDORES = "app_config_proveedores";
     const STORAGE_USERS = "farmapp_users";
     const STORAGE_PRODUCTOS = "farmapp_productos";
     const STORAGE_INSUMOS = "farmapp_insumos";
@@ -240,12 +190,14 @@
     let currentUser = null, currentUserFullName = "", currentUserRole = "";
     let tipoChartInstance = null, topEntregasChartInstance = null, topDestinatariosChartInstance = null;
     let cart = [];
+    let cartEntrada = [];
     let editingProductCode = null;
 
     const defaultAreas = ["Urgencia", "Odontología", "Promotoras", "Otro"];
     const defaultTiposProducto = ["Medicamento", "Insumo"];
     const defaultTiposMovimiento = ["Entrada", "Salida"];
     const defaultEstantes = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const defaultProveedores = ["Distribuidora Salud SAS", "Lab Farmacéutico Nacional", "Insumos Médicos Ltda"];
 
     function loadConfig(key, defaultValue) { const stored = localStorage.getItem(key); return stored ? JSON.parse(stored) : defaultValue; }
     function saveConfig(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
@@ -253,14 +205,13 @@
     function getTiposProducto() { return loadConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, defaultTiposProducto); }
     function getTiposMovimiento() { return loadConfig(STORAGE_CONFIG_TIPOS_MOV, defaultTiposMovimiento); }
     function getEstantes() { return loadConfig(STORAGE_CONFIG_ESTANTES, defaultEstantes); }
+    function getProveedores() { return loadConfig(STORAGE_CONFIG_PROVEEDORES, defaultProveedores); }
     function getExpiryDays() { return parseInt(localStorage.getItem(STORAGE_EXPIRY_DAYS) || "30"); }
     function setExpiryDays(days) { localStorage.setItem(STORAGE_EXPIRY_DAYS, days); renderInventory(); updateNotificationBell(); }
 
-    // ==================== CRIPTO ====================
     async function hashPassword(pw) { const encoder = new TextEncoder(); const data = encoder.encode(pw); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
     async function verifyPassword(plain, hash) { return (await hashPassword(plain)) === hash; }
 
-    // ==================== DATOS ====================
     function getInventory() { return [...(JSON.parse(localStorage.getItem(STORAGE_PRODUCTOS)||"[]")), ...(JSON.parse(localStorage.getItem(STORAGE_INSUMOS)||"[]"))]; }
     function saveProduct(p) { const key = p.tipoProducto === "Medicamento" ? STORAGE_PRODUCTOS : STORAGE_INSUMOS; const list = JSON.parse(localStorage.getItem(key)||"[]"); const idx = list.findIndex(i=>i.codigo===p.codigo); if(idx!==-1) list[idx]=p; else list.push(p); localStorage.setItem(key,JSON.stringify(list)); }
     function getUsers() { return JSON.parse(localStorage.getItem(STORAGE_USERS)||"{}"); }
@@ -471,7 +422,7 @@
             row.insertCell(5).innerText = m.cantidad;
             row.insertCell(6).innerText = m.lote || "";
             row.insertCell(7).innerText = m.registroInvima || "";
-            row.insertCell(8).innerText = m.destinatario || "—";
+            row.insertCell(8).innerText = m.destinatario || m.proveedor || "—";
             row.insertCell(9).innerText = m.area || "—";
             if(currentUserRole==="admin"||currentUserRole==="root") {
                 const cellActions = row.insertCell(10);
@@ -518,15 +469,14 @@
         document.getElementById("movRegistroInvima").value = "";
         document.getElementById("movVencimiento").value = "";
         document.getElementById("movEstante").value = "";
+        document.getElementById("movProveedor").value = "";
     }
 
-    // Modal de búsqueda de producto con botón "Seleccionar" visible y atractivo
     function openProductSearchModal() {
         const modal = document.createElement("div"); modal.className = "modal";
         modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-search"></i> Buscar producto</h3><input type="text" id="searchProductInput" placeholder="🔎 Código o descripción..." style="width:100%; margin-bottom:16px; padding:12px; border-radius:28px; border:1px solid #cbd5e1;"><div class="table-wrapper"><table id="searchProductTable" style="min-width:900px; width:100%;"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Stock</th><th>Vencimiento</th><th>Estante</th><th>Acción</th></tr></thead><tbody></tbody></table></div><div style="margin-top:16px; text-align:right;"><button class="btn-outline" id="closeSearchModal">Cerrar</button></div></div>`;
         document.body.appendChild(modal);
         const tbody = modal.querySelector("#searchProductTable tbody");
-        
         function renderSearch(term) { 
             const inv = getInventory(); 
             const filtered = inv.filter(p=>p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)); 
@@ -546,8 +496,6 @@
                 </tr>
             `).join(''); 
         }
-        
-        // Delegación de eventos para selección (clic en fila o en botón)
         tbody.addEventListener('click', (e) => {
             let targetRow = e.target.closest('tr');
             if(!targetRow) return;
@@ -568,14 +516,13 @@
                 }
             }
         });
-        
         const input = modal.querySelector("#searchProductInput"); 
         input.addEventListener("input", e => renderSearch(e.target.value.toLowerCase())); 
         renderSearch("");
         modal.querySelector("#closeSearchModal").onclick = () => modal.remove();
     }
 
-    // ==================== ENTREGAS (CARRITO CON ICONOS) ====================
+    // ==================== ENTREGAS (con autocompletado) ====================
     function actualizarStockItem(item) { const prod = getInventory().find(p=>p.codigo===item.codigo); if(prod) item.stockActual = prod.existencia; else item.stockActual = 0; return item; }
     function renderCart() {
         const container = document.getElementById("cartContainer");
@@ -614,36 +561,58 @@
         win.document.close();
     }
 
-    function cargarSelectProductosEntrega() {
-        const inv = getInventory();
-        const select = document.getElementById("selectProductoEntrega");
-        select.innerHTML = '<option value="">-- Seleccionar --</option>';
-        inv.forEach(p=>{ const opt = document.createElement("option"); opt.value = p.codigo; opt.textContent = `${p.codigo} - ${p.descripcion} (Stock:${p.existencia})`; select.appendChild(opt); });
-        select.onchange = () => { const prod = inv.find(p=>p.codigo===select.value); document.getElementById("stockDisponibleEntrega").value = prod ? prod.existencia : ""; };
+    function setupAutocomplete(inputId, listId, onSelectCallback) {
+        const input = document.getElementById(inputId);
+        const listEl = document.getElementById(listId);
+        let currentProducts = getInventory();
+        function updateSuggestions() {
+            const term = input.value.toLowerCase().trim();
+            if(term === "") { listEl.style.display = "none"; return; }
+            const filtered = currentProducts.filter(p => p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)).slice(0,10);
+            if(filtered.length === 0) { listEl.style.display = "none"; return; }
+            listEl.innerHTML = filtered.map(p => `<li data-cod="${p.codigo}" data-desc="${p.descripcion.replace(/"/g, '&quot;')}" data-tipo="${p.tipoProducto}" data-lote="${p.lote||''}" data-reginv="${p.registroInvima||''}" data-ven="${p.vencimiento||''}" data-estante="${p.estante||''}" data-stock="${p.existencia}">${p.codigo} - ${p.descripcion} (Stock: ${p.existencia})</li>`).join('');
+            listEl.style.display = "block";
+        }
+        input.addEventListener("input", updateSuggestions);
+        listEl.addEventListener("click", (e) => {
+            const li = e.target.closest("li");
+            if(li) {
+                const cod = li.getAttribute("data-cod");
+                const prod = getInventory().find(p => p.codigo === cod);
+                if(prod && onSelectCallback) onSelectCallback(prod);
+                input.value = `${prod.codigo} - ${prod.descripcion}`;
+                listEl.style.display = "none";
+            }
+        });
+        document.addEventListener("click", (e) => { if(e.target !== input) listEl.style.display = "none"; });
     }
 
-    function setupEventosEntrega() {
+    let selectedProductoEntrega = null;
+    function initEntregaAutocomplete() {
+        setupAutocomplete("autocompleteEntregaInput", "autocompleteEntregaList", (prod) => {
+            selectedProductoEntrega = prod;
+            document.getElementById("stockDisponibleEntrega").value = prod.existencia;
+        });
         document.getElementById("agregarAlCarritoBtn").onclick = () => {
-            const cod = document.getElementById("selectProductoEntrega").value;
-            if(!cod) return alert("Seleccione producto");
+            if(!selectedProductoEntrega) return alert("Seleccione un producto de la lista");
             const cant = parseInt(document.getElementById("cantidadEntrega").value);
             if(isNaN(cant)||cant<=0) return alert("Cantidad válida");
-            const prod = getInventory().find(p=>p.codigo===cod);
-            if(!prod) return alert("Producto no existe");
-            if(prod.existencia < cant) return alert(`Stock insuficiente: solo ${prod.existencia}`);
-            const exist = cart.find(i=>i.codigo===cod);
+            if(selectedProductoEntrega.existencia < cant) return alert(`Stock insuficiente: solo ${selectedProductoEntrega.existencia}`);
+            const exist = cart.find(i=>i.codigo===selectedProductoEntrega.codigo);
             if(exist) {
-                if(exist.cantidad + cant > prod.existencia) return alert(`No puede exceder el stock actual (${prod.existencia})`);
+                if(exist.cantidad + cant > selectedProductoEntrega.existencia) return alert(`No puede exceder el stock actual (${selectedProductoEntrega.existencia})`);
                 exist.cantidad += cant;
-                exist.stockActual = prod.existencia;
+                exist.stockActual = selectedProductoEntrega.existencia;
             } else {
-                cart.push({ codigo:prod.codigo, descripcion:prod.descripcion, cantidad:cant, tipoProducto:prod.tipoProducto, lote:prod.lote, registroInvima:prod.registroInvima, vencimiento:prod.vencimiento, estante:prod.estante, stockActual:prod.existencia });
+                cart.push({ codigo:selectedProductoEntrega.codigo, descripcion:selectedProductoEntrega.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrega.tipoProducto, lote:selectedProductoEntrega.lote, registroInvima:selectedProductoEntrega.registroInvima, vencimiento:selectedProductoEntrega.vencimiento, estante:selectedProductoEntrega.estante, stockActual:selectedProductoEntrega.existencia });
             }
             renderCart();
             document.getElementById("cantidadEntrega").value = 1;
             document.getElementById("stockDisponibleEntrega").value = "";
+            document.getElementById("autocompleteEntregaInput").value = "";
+            selectedProductoEntrega = null;
         };
-        document.getElementById("limpiarFormularioEntregaBtn").onclick = () => { document.getElementById("selectProductoEntrega").value = ""; document.getElementById("cantidadEntrega").value = 1; document.getElementById("stockDisponibleEntrega").value = ""; };
+        document.getElementById("limpiarFormularioEntregaBtn").onclick = () => { document.getElementById("autocompleteEntregaInput").value = ""; document.getElementById("cantidadEntrega").value = 1; document.getElementById("stockDisponibleEntrega").value = ""; selectedProductoEntrega = null; };
         document.getElementById("confirmarEntregaBtn").onclick = async () => {
             let area = document.getElementById("areaDestino").value;
             if(area === "Otro") area = document.getElementById("otroArea").value.trim() || "Otro";
@@ -662,16 +631,103 @@
                 renderMovementsTable();
                 renderHistorialEntregas();
                 updateNotificationBell();
-                cargarSelectProductosEntrega();
                 renderDashboard();
             } catch(e){ alert("Error: "+e.message); }
         };
         document.getElementById("limpiarCarritoBtn").onclick = () => { cart = []; renderCart(); };
         document.getElementById("areaDestino").addEventListener("change", function(){ document.getElementById("otroArea").style.display = this.value === "Otro" ? "block" : "none"; });
-        cargarSelectProductosEntrega();
     }
 
-    // ==================== HISTORIAL ENTREGAS (RE-DISPENSAR SIEMPRE VISIBLE) ====================
+    // ==================== ENTRADAS POR PROVEEDOR ====================
+    let selectedProductoEntrada = null;
+    function renderCartEntrada() {
+        const container = document.getElementById("cartEntradaContainer");
+        if(!container) return;
+        if(cartEntrada.length===0){ container.innerHTML="<p style='text-align:center; color:gray;'>🛒 Carrito vacío</p>"; return; }
+        container.innerHTML = cartEntrada.map((item,idx)=>`
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <strong>${item.codigo}</strong> - ${item.descripcion}
+                    <span>Cantidad: ${item.cantidad}</span>
+                </div>
+                <div class="cart-item-actions">
+                    <button class="btn-icon btn-icon-edit" data-edit="${idx}" title="Editar cantidad"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon btn-icon-delete" data-del="${idx}" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll("#cartEntradaContainer [data-edit]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-edit")); const nuevaCant = prompt("Nueva cantidad:", cartEntrada[i].cantidad); if(nuevaCant && !isNaN(parseInt(nuevaCant))) { cartEntrada[i].cantidad = parseInt(nuevaCant); renderCartEntrada(); } }; });
+        document.querySelectorAll("#cartEntradaContainer [data-del]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-del")); cartEntrada.splice(i,1); renderCartEntrada(); }; });
+    }
+
+    async function registrarEntradaProveedor(items, proveedor, factura) {
+        if(!items.length) throw new Error("Carrito vacío");
+        if(!proveedor) throw new Error("Seleccione un proveedor");
+        for(let item of items) {
+            await registrarMovimiento({ codigo:item.codigo, cantidad:item.cantidad, tipo:"Entrada", descripcion:item.descripcion, tipoProducto:item.tipoProducto, lote:item.lote, registroInvima:item.registroInvima, vencimiento:item.vencimiento, estante:item.estante, stockMinimo:0 }, { proveedor, factura });
+        }
+    }
+
+    function imprimirComprobanteEntrada(proveedor, factura, items) {
+        const win = window.open();
+        win.document.write(`<html><head><title>Comprobante Entrada</title><style>body{font-family:monospace;padding:20px;} .recibo{border:1px solid #ccc;padding:20px;max-width:400px;margin:auto;}</style></head><body><div class="recibo"><h3>FARMACIA ESE HOSPITAL LOCAL SAN ZENON</h3><p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p><p><strong>Registró:</strong> ${currentUserFullName}</p><p><strong>Proveedor:</strong> ${proveedor}</p><p><strong>Factura/Referencia:</strong> ${factura || "N/A"}</p><hr><table style="width:100%"><tr><th>Producto</th><th>Cantidad</th></tr>${items.map(i=>`<tr><td>${i.codigo} - ${i.descripcion}</td><td style="text-align:center">${i.cantidad}</td>`).join('')}</table><hr><p>Total ítems: ${items.reduce((s,i)=>s+i.cantidad,0)}</p><p style="text-align:center">--- Comprobante de entrada a inventario ---</p></div><script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`);
+        win.document.close();
+    }
+
+    function initEntradaProveedor() {
+        setupAutocomplete("autocompleteEntradaInput", "autocompleteEntradaList", (prod) => {
+            selectedProductoEntrada = prod;
+            document.getElementById("stockActualEntrada").value = prod.existencia;
+        });
+        document.getElementById("agregarAlCarritoEntradaBtn").onclick = () => {
+            if(!selectedProductoEntrada) return alert("Seleccione un producto");
+            const cant = parseInt(document.getElementById("cantidadEntrada").value);
+            if(isNaN(cant)||cant<=0) return alert("Cantidad válida");
+            const exist = cartEntrada.find(i=>i.codigo===selectedProductoEntrada.codigo);
+            if(exist) exist.cantidad += cant;
+            else cartEntrada.push({ codigo:selectedProductoEntrada.codigo, descripcion:selectedProductoEntrada.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrada.tipoProducto, lote:selectedProductoEntrada.lote, registroInvima:selectedProductoEntrada.registroInvima, vencimiento:selectedProductoEntrada.vencimiento, estante:selectedProductoEntrada.estante });
+            renderCartEntrada();
+            document.getElementById("cantidadEntrada").value = 1;
+            document.getElementById("stockActualEntrada").value = "";
+            document.getElementById("autocompleteEntradaInput").value = "";
+            selectedProductoEntrada = null;
+        };
+        document.getElementById("confirmarEntradaBtn").onclick = async () => {
+            const proveedor = document.getElementById("proveedorDestino").value;
+            const factura = document.getElementById("facturaReferencia").value;
+            if(cartEntrada.length===0) return alert("Carrito vacío");
+            if(!proveedor) return alert("Seleccione un proveedor");
+            try {
+                await registrarEntradaProveedor(cartEntrada, proveedor, factura);
+                imprimirComprobanteEntrada(proveedor, factura, cartEntrada);
+                alert("✅ Entrada registrada. Stock actualizado.");
+                cartEntrada = [];
+                renderCartEntrada();
+                document.getElementById("facturaReferencia").value = "";
+                renderInventory();
+                renderMovementsTable();
+                updateNotificationBell();
+                renderDashboard();
+            } catch(e){ alert("Error: "+e.message); }
+        };
+        document.getElementById("limpiarCarritoEntradaBtn").onclick = () => { cartEntrada = []; renderCartEntrada(); };
+        function actualizarSelectProveedores() {
+            const select = document.getElementById("proveedorDestino");
+            if(select) {
+                const provs = getProveedores();
+                select.innerHTML = '<option value="">-- Seleccione --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
+            }
+            const selectMov = document.getElementById("movProveedor");
+            if(selectMov) {
+                const provs = getProveedores();
+                selectMov.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
+            }
+        }
+        actualizarSelectProveedores();
+        window.refreshProveedoresSelect = actualizarSelectProveedores;
+    }
+
+    // ==================== HISTORIAL ENTREGAS ====================
     function getEntregas() {
         const movs = getMovements().filter(m => m.tipo === "Salida" && m.destinatario && m.area);
         const grupos = new Map();
@@ -704,7 +760,6 @@
             const btn = document.createElement("button"); 
             btn.innerHTML = "<i class='fas fa-redo-alt'></i> Re-dispensar";
             btn.className = "btn-redispensar";
-            btn.style.cursor = "pointer";
             btn.onclick = () => {
                 cart = pedido.productos.map(prod => {
                     const prodActual = getInventory().find(p => p.codigo === prod.codigo);
@@ -798,32 +853,36 @@
         if(document.getElementById("usersList").style.display === "block") renderUsersTable();
     }
 
-    // ==================== CONFIGURACIÓN ====================
+    // ==================== CONFIGURACIÓN (incluye proveedores) ====================
     function openConfigModal() {
-        // Cualquier usuario puede acceder (ya no hay restricción)
         const modal = document.createElement("div"); modal.className = "modal";
         modal.innerHTML = `<div class="modal-content"><h3>Configuración del Sistema</h3>
             <div class="config-list"><h4>📌 Áreas / Servicios</h4><div id="areasList"></div><div class="add-item"><input type="text" id="newArea" placeholder="Nueva área"><button class="btn-secondary" id="addAreaBtn">+ Agregar</button></div></div>
             <div class="config-list"><h4>📦 Tipo Producto</h4><div id="tiposProductoList"></div><div class="add-item"><input type="text" id="newTipoProd" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoProdBtn">+ Agregar</button></div></div>
             <div class="config-list"><h4>🔄 Tipo Movimiento</h4><div id="tiposMovList"></div><div class="add-item"><input type="text" id="newTipoMov" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoMovBtn">+ Agregar</button></div></div>
             <div class="config-list"><h4>🏷️ Estantes (Ubicaciones)</h4><div id="estantesList"></div><div class="add-item"><input type="text" id="newEstante" placeholder="Nuevo estante"><button class="btn-secondary" id="addEstanteBtn">+ Agregar</button></div></div>
+            <div class="config-list"><h4>🚚 Proveedores</h4><div id="proveedoresList"></div><div class="add-item"><input type="text" id="newProveedor" placeholder="Nuevo proveedor"><button class="btn-secondary" id="addProveedorBtn">+ Agregar</button></div></div>
             <button class="btn-outline" id="closeConfigModal">Cerrar</button></div>`;
         document.body.appendChild(modal);
         function renderList(containerId, items, storageKey) {
             const container = document.getElementById(containerId);
             container.innerHTML = items.map((item,idx)=>`<div class="config-item"><span>${item}</span><button class="btn-danger btn-icon" data-idx="${idx}">🗑️</button></div>`).join('');
-            container.querySelectorAll("[data-idx]").forEach(btn=>{ btn.onclick = () => { const idx = parseInt(btn.dataset.idx); items.splice(idx,1); saveConfig(storageKey, items); renderList(containerId, items, storageKey); updateAllDynamicSelects(); }; });
+            container.querySelectorAll("[data-idx]").forEach(btn=>{ btn.onclick = () => { const idx = parseInt(btn.dataset.idx); items.splice(idx,1); saveConfig(storageKey, items); renderList(containerId, items, storageKey); updateAllDynamicSelects(); if(storageKey === STORAGE_CONFIG_PROVEEDORES && window.refreshProveedoresSelect) window.refreshProveedoresSelect(); }; });
         }
         function refreshAll() {
             renderList("areasList", getAreas(), STORAGE_CONFIG_AREAS);
             renderList("tiposProductoList", getTiposProducto(), STORAGE_CONFIG_TIPOS_PRODUCTO);
             renderList("tiposMovList", getTiposMovimiento(), STORAGE_CONFIG_TIPOS_MOV);
             renderList("estantesList", getEstantes(), STORAGE_CONFIG_ESTANTES);
+            renderList("proveedoresList", getProveedores(), STORAGE_CONFIG_PROVEEDORES);
+            const divMini = document.getElementById("proveedoresListaMini");
+            if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>";
         }
         document.getElementById("addAreaBtn").onclick = () => { const val = document.getElementById("newArea").value.trim(); if(val && !getAreas().includes(val)) { const areas = getAreas(); areas.push(val); saveConfig(STORAGE_CONFIG_AREAS, areas); refreshAll(); updateAllDynamicSelects(); document.getElementById("newArea").value=""; } };
         document.getElementById("addTipoProdBtn").onclick = () => { const val = document.getElementById("newTipoProd").value.trim(); if(val && !getTiposProducto().includes(val)) { const tipos = getTiposProducto(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, tipos); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoProd").value=""; } };
         document.getElementById("addTipoMovBtn").onclick = () => { const val = document.getElementById("newTipoMov").value.trim(); if(val && !getTiposMovimiento().includes(val)) { const tipos = getTiposMovimiento(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_MOV, tipos); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoMov").value=""; } };
         document.getElementById("addEstanteBtn").onclick = () => { const val = document.getElementById("newEstante").value.trim(); if(val && !getEstantes().includes(val)) { const estantes = getEstantes(); estantes.push(val); saveConfig(STORAGE_CONFIG_ESTANTES, estantes); refreshAll(); updateAllDynamicSelects(); document.getElementById("newEstante").value=""; } };
+        document.getElementById("addProveedorBtn").onclick = () => { const val = document.getElementById("newProveedor").value.trim(); if(val && !getProveedores().includes(val)) { const provs = getProveedores(); provs.push(val); saveConfig(STORAGE_CONFIG_PROVEEDORES, provs); refreshAll(); updateAllDynamicSelects(); if(window.refreshProveedoresSelect) window.refreshProveedoresSelect(); document.getElementById("newProveedor").value=""; } };
         document.getElementById("closeConfigModal").onclick = () => modal.remove();
         refreshAll();
     }
@@ -835,6 +894,14 @@
         const filtroArea = document.getElementById("filtroAreaHistorial"); if(filtroArea) filtroArea.innerHTML = '<option value="">Todas</option>' + getAreas().map(a=>`<option value="${a}">${a}</option>`).join('');
         const prodEstante = document.getElementById("prodEstante"); if(prodEstante) prodEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join('');
         const movEstante = document.getElementById("movEstante"); if(movEstante) movEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join('');
+        const movProveedor = document.getElementById("movProveedor");
+        if(movProveedor) {
+            const provs = getProveedores();
+            movProveedor.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+        const divMini = document.getElementById("proveedoresListaMini");
+        if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>";
+        if(window.refreshProveedoresSelect) window.refreshProveedoresSelect();
     }
 
     // ==================== NOTIFICACIONES ====================
@@ -920,7 +987,6 @@
         XLSX.writeFile(wb, filename + ".xlsx");
     }
     
-    // Importación flexible de inventario (tolera cualquier orden de columnas)
     async function importInventoryFromExcel(file) { 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -1044,10 +1110,15 @@
         if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_PRODUCTO)) saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, defaultTiposProducto);
         if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_MOV)) saveConfig(STORAGE_CONFIG_TIPOS_MOV, defaultTiposMovimiento);
         if(!localStorage.getItem(STORAGE_CONFIG_ESTANTES)) saveConfig(STORAGE_CONFIG_ESTANTES, defaultEstantes);
+        if(!localStorage.getItem(STORAGE_CONFIG_PROVEEDORES)) saveConfig(STORAGE_CONFIG_PROVEEDORES, defaultProveedores);
     }
 
     function setupApp() {
-        renderInventory(); renderMovementsTable(); setupEventosEntrega(); renderHistorialEntregas(); updateAllDynamicSelects(); renderDashboard();
+        // Sincronizar input de días con el valor guardado
+        document.getElementById("expiryDaysInput").value = getExpiryDays();
+        renderInventory(); renderMovementsTable(); renderHistorialEntregas(); updateAllDynamicSelects(); renderDashboard();
+        initEntregaAutocomplete();
+        initEntradaProveedor();
         const bell = document.getElementById("bellIcon");
         const panel = document.getElementById("alertPanel");
         bell.addEventListener("click", (e) => { e.stopPropagation(); panel.style.display = panel.style.display === "block" ? "none" : "block"; });
@@ -1062,7 +1133,7 @@
         document.getElementById("downloadTemplateBtn").onclick = downloadInventoryTemplate;
         document.getElementById("addProductBtn").onclick = addOrUpdateProduct;
         document.getElementById("cancelEditBtn").onclick = cancelEditProduct;
-        document.getElementById("registrarMovBtn").onclick = async () => { try { const cod = document.getElementById("movCodigo").value.trim(); if(!cod) throw new Error("Código obligatorio"); const cantidad = parseInt(document.getElementById("movCantidad").value); if(isNaN(cantidad) || cantidad <= 0) throw new Error("Cantidad válida > 0"); await registrarMovimiento({ codigo:cod, cantidad:cantidad, tipo:document.getElementById("movTipo").value, descripcion:document.getElementById("movDescripcion").value, tipoProducto:document.getElementById("movTipoProducto").value, lote:document.getElementById("movLote").value, registroInvima:document.getElementById("movRegistroInvima").value, vencimiento:document.getElementById("movVencimiento").value, estante:document.getElementById("movEstante").value, stockMinimo:parseInt(document.getElementById("movStockMinimo").value)||0 }); alert("Movimiento registrado exitosamente"); limpiarFormularioMovimiento(); renderInventory(); renderMovementsTable(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } };
+        document.getElementById("registrarMovBtn").onclick = async () => { try { const cod = document.getElementById("movCodigo").value.trim(); if(!cod) throw new Error("Código obligatorio"); const cantidad = parseInt(document.getElementById("movCantidad").value); if(isNaN(cantidad) || cantidad <= 0) throw new Error("Cantidad válida > 0"); const proveedor = document.getElementById("movProveedor").value; const extra = proveedor ? { proveedor } : {}; await registrarMovimiento({ codigo:cod, cantidad:cantidad, tipo:document.getElementById("movTipo").value, descripcion:document.getElementById("movDescripcion").value, tipoProducto:document.getElementById("movTipoProducto").value, lote:document.getElementById("movLote").value, registroInvima:document.getElementById("movRegistroInvima").value, vencimiento:document.getElementById("movVencimiento").value, estante:document.getElementById("movEstante").value, stockMinimo:parseInt(document.getElementById("movStockMinimo").value)||0 }, extra); alert("Movimiento registrado exitosamente"); limpiarFormularioMovimiento(); renderInventory(); renderMovementsTable(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } };
         document.getElementById("limpiarFormBtn").onclick = limpiarFormularioMovimiento;
         document.getElementById("buscarProductoBtn").onclick = openProductSearchModal;
         document.getElementById("exportMovimientosBtn").onclick = () => exportToExcel(getMovements(), "movimientos_completos");
@@ -1075,11 +1146,12 @@
         document.getElementById("cambiarPwdBtn").onclick = async () => { const old = document.getElementById("pwdActual").value; const newp = document.getElementById("pwdNueva").value; const conf = document.getElementById("pwdConfirm").value; if(newp !== conf) return alert("Las nuevas contraseñas no coinciden"); const users = getUsers(); if(await verifyPassword(old, users[currentUser].passwordHash)) { users[currentUser].passwordHash = await hashPassword(newp); saveUsers(users); alert("Contraseña cambiada"); document.getElementById("pwdActual").value = ""; document.getElementById("pwdNueva").value = ""; document.getElementById("pwdConfirm").value = ""; } else alert("Contraseña actual incorrecta"); };
         document.getElementById("logoutBtn").onclick = () => { sessionStorage.clear(); location.reload(); };
         document.getElementById("configBtn").onclick = openConfigModal;
+        document.getElementById("abrirConfigProveedoresBtn").onclick = openConfigModal;
         document.getElementById("toggleUsersBtn").onclick = () => { const div = document.getElementById("usersList"); if(div.style.display === "none") { renderUsersTable(); div.style.display = "block"; if(currentUserRole==="admin"||currentUserRole==="root") document.getElementById("adminAddUser").style.display = "block"; } else div.style.display = "none"; };
         document.getElementById("addUserBtn").onclick = addUser;
         document.getElementById("aplicarFiltrosHistorial").onclick = renderHistorialEntregas;
         document.getElementById("limpiarFiltrosHistorial").onclick = () => { document.getElementById("filtroAreaHistorial").value = ""; document.getElementById("filtroDestinatarioHistorial").value = ""; document.getElementById("filtroFechaDesdeHistorial").value = ""; document.getElementById("filtroFechaHastaHistorial").value = ""; renderHistorialEntregas(); };
-        document.getElementById("exportAllDataBtn").onclick = () => { const allData = { productos: getInventory(), movimientos: getMovements(), usuarios: getUsers(), configuraciones: { areas: getAreas(), tiposProducto: getTiposProducto(), tiposMovimiento: getTiposMovimiento(), estantes: getEstantes(), expiryDays: getExpiryDays() } }; exportToExcel([allData], "backup_completo"); };
+        document.getElementById("exportAllDataBtn").onclick = () => { const allData = { productos: getInventory(), movimientos: getMovements(), usuarios: getUsers(), configuraciones: { areas: getAreas(), tiposProducto: getTiposProducto(), tiposMovimiento: getTiposMovimiento(), estantes: getEstantes(), proveedores: getProveedores(), expiryDays: getExpiryDays() } }; exportToExcel([allData], "backup_completo"); };
         document.getElementById("resetDataBtn").onclick = () => { if(confirm("Restablecer datos de ejemplo?")) { localStorage.clear(); location.reload(); } };
         document.getElementById("renewLicenseBtn").onclick = () => { if(confirm("¿Renovar licencia por 3 meses? (requiere contraseña)")) { const pwd = prompt("Contraseña de habilitación:"); if(pwd === HABILITATION_PASSWORD) { localStorage.setItem(STORAGE_LICENSE_CHECK, new Date().toISOString()); alert("Licencia renovada por 3 meses."); renderDashboard(); } else alert("Contraseña incorrecta."); } };
         if(currentUserRole === "root") document.getElementById("licenciaTabBtn").style.display = "block";
@@ -1088,11 +1160,13 @@
                 document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
                 btn.classList.add("active");
                 document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
-                document.getElementById(`tab${btn.dataset.tab.charAt(0).toUpperCase()+btn.dataset.tab.slice(1)}`).classList.add("active");
-                if(btn.dataset.tab === "entregas") cargarSelectProductosEntrega();
-                if(btn.dataset.tab === "historialEntregas") renderHistorialEntregas();
-                if(btn.dataset.tab === "usuarios" && document.getElementById("usersList").style.display === "block") renderUsersTable();
-                if(btn.dataset.tab === "dashboard") renderDashboard();
+                const tabName = btn.dataset.tab;
+                const tabId = `tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`;
+                document.getElementById(tabId).classList.add("active");
+                if(tabName === "entregas") { /* ya inicializado */ }
+                if(tabName === "historialEntregas") renderHistorialEntregas();
+                if(tabName === "usuarios" && document.getElementById("usersList").style.display === "block") renderUsersTable();
+                if(tabName === "dashboard") renderDashboard();
             };
         });
     }
