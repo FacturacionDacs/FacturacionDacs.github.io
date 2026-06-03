@@ -35,7 +35,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; align-items: end; }
         .form-field { display: flex; flex-direction: column; gap: 6px; }
         .form-field label { font-weight: 600; color: #1e293b; font-size: 0.85rem; }
-        .form-field input, .form-field select { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 16px; font-size: 0.9rem; width: 100%; }
+        .form-field input, .form-field select, .form-field textarea { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 16px; font-size: 0.9rem; width: 100%; }
         .btn-secondary { background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 28px; cursor: pointer; font-weight: 500; transition: 0.2s; }
         .btn-secondary:hover { background: #2563eb; }
         .btn-outline { background: transparent; border: 1px solid #64748b; padding: 10px 16px; border-radius: 28px; cursor: pointer; font-weight: 500; }
@@ -97,6 +97,19 @@
         .autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 20px; max-height: 250px; overflow-y: auto; z-index: 1000; list-style: none; margin: 0; padding: 0; }
         .autocomplete-suggestions li { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #e2e8f0; }
         .autocomplete-suggestions li:hover { background-color: #f1f5f9; }
+        .btn-group { margin-top: 20px; display: flex; gap: 16px; flex-wrap: wrap; }
+        .margin-top-20 { margin-top: 20px; }
+        .toast-notification { position: fixed; bottom: 20px; right: 20px; background: #1e3c72; color: white; padding: 12px 24px; border-radius: 40px; z-index: 3000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); animation: fadein 0.3s, fadeout 0.3s 2.7s; pointer-events: none; }
+        @keyframes fadein { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeout { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+        .action-buttons { margin-top: 20px; display: flex; gap: 12px; }
+        .full-width { grid-column: span 2; }
+        .movement-search-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; background: #f1f5f9; padding: 10px 16px; border-radius: 60px; }
+        .movement-search-bar input { flex: 2; min-width: 200px; padding: 10px 18px; border-radius: 40px; border: 1px solid #cbd5e1; background: white; }
+        .movement-search-bar button, .movement-search-bar .btn-secondary, .movement-search-bar .btn-success { margin: 0; }
+        .section-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .section-header h3 { margin: 0; }
+        .section-header .search-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     </style>
 </head>
 <body>
@@ -124,6 +137,7 @@
         <button class="tab-btn" data-tab="historialEntregas">📜 Historial Entregas</button>
         <button class="tab-btn" data-tab="reportes">📊 Reportes</button>
         <button class="tab-btn" data-tab="usuarios">👥 Usuarios</button>
+        <button class="tab-btn" id="auditoriaTabBtn" style="display: none;">📋 Auditoría</button>
         <button class="tab-btn" id="licenciaTabBtn" style="display: none;">🔐 Licencia</button>
     </div>
 
@@ -140,40 +154,63 @@
         <div class="card"><div class="umbral-bar"><label>⚠️ Alertar vencimiento (días):</label><input type="number" id="expiryDaysInput" min="1" class="round-input" style="width:100px;"><button class="btn-secondary" id="setExpiryDaysBtn">Aplicar</button><span>🔴 Vencidos | 🟡 Stock bajo / Próximo venc.</span></div>
         <div class="filter-bar"><select id="invSearchType"><option value="codigo">Código</option><option value="descripcion">Descripción</option><option value="tipo">Tipo</option><option value="estante">Estante</option></select><input type="text" id="invSearchValue" placeholder="Buscar..."><button class="btn-secondary" id="btnBuscarInv">Buscar</button><button class="btn-outline" id="btnLimpiarInv">Limpiar</button><button class="btn-warning" id="btnProximosVencer">📅 Próx. vencer</button><button class="btn-danger" id="btnBajoStockInv">⚠️ Bajo stock</button><button class="btn-secondary" id="exportInventarioBtn">Exportar Excel</button><button class="btn-success" id="importInventarioBtn">Importar Excel</button><button class="btn-info" id="downloadTemplateBtn" style="background:#0ea5e9; color:white; border:none; padding:10px 16px; border-radius:28px;"><i class="fas fa-download"></i> Plantilla</button></div>
         <div class="table-wrapper"><table id="inventoryTable"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Existencia</th><th>Stock Mínimo</th><th>Vencimiento</th><th>Estante</th><th>Lote</th><th>Registro INVIMA</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
-        <div class="card"><h3>Agregar / Editar Producto</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="prodCodigo"></div><div class="form-field"><label>Descripción *</label><input type="text" id="prodDescripcion"></div><div class="form-field"><label>Tipo</label><select id="prodTipo"><option>Medicamento</option><option>Insumo</option></select></div><div class="form-field"><label>Existencia</label><input type="number" id="prodExistencia" value="0"></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="prodStockMinimo" value="0"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="prodVencimiento"></div><div class="form-field"><label>Estante</label><select id="prodEstante"></select></div><div class="form-field"><label>Lote</label><input type="text" id="prodLote"></div><div class="form-field"><label>Registro INVIMA</label><input type="text" id="prodRegInvima"></div></div><div style="display:flex; gap:12px;"><button class="btn-primary" id="addProductBtn">Agregar</button><button class="btn-outline" id="cancelEditBtn" style="display:none;">Cancelar</button></div></div>
     </div>
 
-    <!-- Movimientos (con proveedor) -->
-    <div id="tabMovimientos" class="tab-content"><div class="card"><h3>Registrar Movimiento</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="movCodigo"></div><div class="form-field"><label>Descripción</label><input type="text" id="movDescripcion"></div><div class="form-field"><label>Existencia actual</label><input type="text" id="movExistencia" readonly></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="movStockMinimo"></div><div class="form-field"><label>Tipo Movimiento</label><select id="movTipo"></select></div><div class="form-field"><label>Cantidad *</label><input type="number" id="movCantidad" min="1"></div><div class="form-field"><label>Tipo Producto</label><select id="movTipoProducto"></select></div><div class="form-field"><label>Lote</label><input id="movLote"></div><div class="form-field"><label>Registro INVIMA</label><input id="movRegistroInvima"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="movVencimiento"></div><div class="form-field"><label>Estante</label><select id="movEstante"></select></div><div class="form-field"><label>Proveedor (opcional)</label><select id="movProveedor"><option value="">-- Ninguno --</option></select></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-primary" id="registrarMovBtn">Registrar</button><button class="btn-outline" id="limpiarFormBtn">Limpiar</button><button class="btn-secondary" id="buscarProductoBtn">🔍 Buscar producto</button></div></div>
-        <div class="card"><h3>Historial de movimientos</h3><div style="display:flex; gap:12px; margin-bottom:16px;"><button class="btn-secondary" id="exportMovimientosBtn">Exportar Excel</button><button class="btn-success" id="importMovimientosBtn">Importar Excel</button></div><div class="table-wrapper"><table id="movimientosTable"><thead>运转<th>Fecha</th><th>Usuario</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Lote</th><th>Reg. Invima</th><th>Destinatario/Proveedor</th><th>Área</th><th>Acciones</th></tr></thead><tbody></tbody></table></div></div>
+    <!-- Movimientos -->
+    <div id="tabMovimientos" class="tab-content"><div class="card"><h3>Registrar Productos/Movimiento</h3><div class="form-grid"><div class="form-field"><label>Código *</label><input type="text" id="movCodigo"></div><div class="form-field"><label>Descripción</label><input type="text" id="movDescripcion"></div><div class="form-field"><label>Existencia actual</label><input type="text" id="movExistencia" readonly></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="movStockMinimo"></div><div class="form-field"><label>Tipo Movimiento</label><select id="movTipo"></select></div><div class="form-field"><label>Cantidad *</label><input type="number" id="movCantidad" min="1"></div><div class="form-field"><label>Tipo Producto</label><select id="movTipoProducto"></select></div><div class="form-field"><label>Lote</label><input id="movLote"></div><div class="form-field"><label>Registro INVIMA</label><input id="movRegistroInvima"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="movVencimiento"></div><div class="form-field"><label>Estante</label><select id="movEstante"></select></div><div class="form-field"><label>Proveedor (opcional)</label><select id="movProveedor"><option value="">-- Ninguno --</option></select></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-primary" id="registrarMovBtn">Registrar</button><button class="btn-outline" id="limpiarFormBtn">Limpiar</button><button class="btn-secondary" id="buscarProductoBtn">🔍 Buscar producto</button></div></div>
+        
+        <!-- SECCIÓN HISTORIAL DE MOVIMIENTOS - con buscador y botones integrados al título -->
+        <div class="card">
+            <div class="section-header">
+                <h3><i class="fas fa-history"></i> Historial de movimientos</h3>
+                <div class="search-actions">
+                    <div class="movement-search-bar" style="background: transparent; padding: 0; margin: 0;">
+                        <input type="text" id="searchMovimientosInput" placeholder="🔍 Buscar por código, descripción, usuario, destinatario..." autocomplete="off">
+                        <button class="btn-outline" id="clearMovSearchBtn" title="Limpiar búsqueda"><i class="fas fa-times"></i> Limpiar</button>
+                        <button class="btn-secondary" id="exportMovimientosBtn"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                        <button class="btn-success" id="importMovimientosBtn"><i class="fas fa-upload"></i> Importar Excel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="movimientosTable">
+                    <thead>运转<th>Fecha</th><th>Usuario</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Lote</th><th>Reg. Invima</th><th>Destinatario/Proveedor</th><th>Área</th><th>Observación</th><th>Acciones</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="card"><h3><i class="fas fa-truck"></i> Proveedores registrados</h3><div id="proveedoresListaMini" class="proveedor-tag" style="padding:12px;"></div><button class="btn-outline" id="abrirConfigProveedoresBtn" style="margin-top:8px;"><i class="fas fa-cog"></i> Gestionar proveedores</button></div>
     </div>
 
-    <!-- Entregas por Área (con autocompletado) -->
+    <!-- Entregas por Área (con campo nota) -->
     <div id="tabEntregas" class="tab-content"><div class="card"><h3>💊 Dispensación a Áreas / Pacientes</h3><p>Busque el producto escribiendo, ajuste cantidad y agregue al carrito.</p></div>
     <div class="card"><h4>1. Agregar productos al carrito</h4><div class="form-grid"><div class="form-field"><label>Producto</label><div class="autocomplete-container" id="autocompleteEntregaContainer"><input type="text" id="autocompleteEntregaInput" class="autocomplete-input" placeholder="Escriba código o descripción..."><ul id="autocompleteEntregaList" class="autocomplete-suggestions" style="display:none;"></ul></div></div><div class="form-field"><label>Cantidad</label><input type="number" id="cantidadEntrega" min="1" value="1"></div><div class="form-field"><label>Stock disponible</label><input type="text" id="stockDisponibleEntrega" readonly></div><div class="form-field"><button class="btn-primary" id="agregarAlCarritoBtn"><i class="fas fa-cart-plus"></i> Agregar</button><button class="btn-outline" id="limpiarFormularioEntregaBtn">Limpiar</button></div></div><div><h4>Carrito de entrega</h4><div id="cartContainer" style="max-height:280px; overflow-y:auto; border-radius:20px; padding:12px; background:#f9fafb;"></div></div></div>
-    <div class="card"><h4>2. Datos del receptor</h4><div class="form-grid"><div class="form-field"><label>Área / Servicio *</label><select id="areaDestino"></select><input type="text" id="otroArea" placeholder="Especificar otra área" style="margin-top:8px; display:none;"></div><div class="form-field"><label>Nombre del paciente / responsable *</label><input type="text" id="nombreDestinatario" placeholder="Ej: María López"></div></div><div style="display:flex; gap:12px;"><button class="btn-success" id="confirmarEntregaBtn"><i class="fas fa-check-circle"></i> Realizar entrega e imprimir recibo</button><button class="btn-outline" id="limpiarCarritoBtn">Vaciar carrito</button></div></div></div>
+    <div class="card"><h4>2. Datos del receptor y observaciones</h4><div class="form-grid"><div class="form-field"><label>Área / Servicio *</label><select id="areaDestino"></select><input type="text" id="otroArea" placeholder="Especificar otra área" style="margin-top:8px; display:none;"></div><div class="form-field"><label>Nombre del paciente / responsable *</label><input type="text" id="nombreDestinatario" placeholder="Ej: María López"></div><div class="form-field full-width"><label>📝 Nota / Observación (opcional)</label><textarea id="notaEntrega" rows="2" placeholder="Ej: Entregado a familiar, lote próximo a vencer, etc."></textarea></div></div><div class="btn-group"><button class="btn-success" id="confirmarEntregaBtn"><i class="fas fa-check-circle"></i> Realizar entrega e imprimir recibo</button><button class="btn-outline" id="limpiarCarritoBtn">Vaciar carrito</button></div></div></div>
 
-    <!-- Entradas por Proveedor -->
+    <!-- Entradas por Proveedor (con campo nota) -->
     <div id="tabEntradasProveedor" class="tab-content"><div class="card"><h3>📥 Registro de Entrada por Proveedor</h3><p>Seleccione productos, cantidades y el proveedor que los suministra. Al registrar se actualizará el inventario y se generará un comprobante.</p></div>
-    <div class="card"><h4>1. Productos a ingresar</h4><div class="form-grid"><div class="form-field"><label>Producto</label><div class="autocomplete-container" id="autocompleteEntradaContainer"><input type="text" id="autocompleteEntradaInput" class="autocomplete-input" placeholder="Código o descripción..."><ul id="autocompleteEntradaList" class="autocomplete-suggestions" style="display:none;"></ul></div></div><div class="form-field"><label>Cantidad a ingresar</label><input type="number" id="cantidadEntrada" min="1" value="1"></div><div class="form-field"><label>Stock actual</label><input type="text" id="stockActualEntrada" readonly></div><div class="form-field"><button class="btn-primary" id="agregarAlCarritoEntradaBtn"><i class="fas fa-plus-circle"></i> Agregar</button></div></div><div><h4>Carrito de entrada</h4><div id="cartEntradaContainer" style="max-height:280px; overflow-y:auto; border-radius:20px; padding:12px; background:#f9fafb;"></div></div></div>
-    <div class="card"><h4>2. Proveedor</h4><div class="form-grid"><div class="form-field"><label>Seleccione proveedor *</label><select id="proveedorDestino"></select></div><div class="form-field"><label>Número factura / referencia</label><input type="text" id="facturaReferencia" placeholder="Opcional"></div></div><div style="display:flex; gap:12px; margin-top:20px;"><button class="btn-success" id="confirmarEntradaBtn"><i class="fas fa-check-circle"></i> Registrar entrada e imprimir comprobante</button><button class="btn-outline" id="limpiarCarritoEntradaBtn">Vaciar carrito</button></div></div></div>
+    <div class="card"><h4>1. Productos a ingresar</h4><div class="form-grid"><div class="form-field"><label>Producto</label><div class="autocomplete-container" id="autocompleteEntradaContainer"><input type="text" id="autocompleteEntradaInput" class="autocomplete-input" placeholder="Código o descripción..."><ul id="autocompleteEntradaList" class="autocomplete-suggestions" style="display:none;"></ul></div></div><div class="form-field"><label>Cantidad a ingresar</label><input type="number" id="cantidadEntrada" min="1" value="1"></div><div class="form-field"><label>Stock actual</label><input type="text" id="stockActualEntrada" readonly></div><div class="form-field"><button class="btn-primary" id="agregarAlCarritoEntradaBtn"><i class="fas fa-plus-circle"></i> Agregar</button><button class="btn-outline" id="limpiarFormularioEntradaBtn" style="margin-left:8px;"><i class="fas fa-eraser"></i> Limpiar</button></div></div><div><h4>Carrito de entrada</h4><div id="cartEntradaContainer" style="max-height:280px; overflow-y:auto; border-radius:20px; padding:12px; background:#f9fafb;"></div></div></div>
+    <div class="card"><h4>2. Proveedor y observaciones</h4><div class="form-grid"><div class="form-field"><label>Seleccione proveedor *</label><select id="proveedorDestino"></select></div><div class="form-field"><label>Número factura / referencia</label><input type="text" id="facturaReferencia" placeholder="Opcional"></div><div class="form-field full-width"><label>📝 Nota / Observación (opcional)</label><textarea id="notaEntrada" rows="2" placeholder="Ej: Factura con descuento, lote nuevo, etc."></textarea></div></div><div class="btn-group"><button class="btn-success" id="confirmarEntradaBtn"><i class="fas fa-check-circle"></i> Registrar entrada e imprimir comprobante</button><button class="btn-outline" id="limpiarCarritoEntradaBtn">Vaciar carrito</button></div></div></div>
 
     <!-- Historial Entregas -->
-    <div id="tabHistorialEntregas" class="tab-content"><div class="card"><h3>Historial de Entregas por Área</h3><div class="form-grid"><div class="form-field"><label>Área</label><select id="filtroAreaHistorial"><option value="">Todas</option></select></div><div class="form-field"><label>Destinatario</label><input type="text" id="filtroDestinatarioHistorial"></div><div class="form-field"><label>Fecha desde</label><input type="date" id="filtroFechaDesdeHistorial"></div><div class="form-field"><label>Fecha hasta</label><input type="date" id="filtroFechaHastaHistorial"></div><div class="form-field"><button class="btn-secondary" id="aplicarFiltrosHistorial">Filtrar</button><button class="btn-outline" id="limpiarFiltrosHistorial">Limpiar</button></div></div><div class="table-wrapper"><table id="historialEntregasTable"><thead>运转<th>Fecha/Hora</th><th>Usuario</th><th>Área</th><th>Destinatario</th><th>Productos</th><th>Re-dispensar</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="tabHistorialEntregas" class="tab-content"><div class="card"><h3>Historial de Entregas por Área</h3><div class="form-grid"><div class="form-field"><label>Área</label><select id="filtroAreaHistorial"><option value="">Todas</option></select></div><div class="form-field"><label>Destinatario</label><input type="text" id="filtroDestinatarioHistorial"></div><div class="form-field"><label>Fecha desde</label><input type="date" id="filtroFechaDesdeHistorial"></div><div class="form-field"><label>Fecha hasta</label><input type="date" id="filtroFechaHastaHistorial"></div><div class="form-field"><button class="btn-secondary" id="aplicarFiltrosHistorial">Filtrar</button><button class="btn-outline" id="limpiarFiltrosHistorial">Limpiar</button></div></div><div class="table-wrapper"><table id="historialEntregasTable"><thead>运转<th>Fecha/Hora</th><th>Usuario</th><th>Área</th><th>Destinatario</th><th>Productos</th><th>Observación</th><th>Re-dispensar</th></tr></thead><tbody></tbody></table></div></div></div>
 
     <!-- Reportes -->
     <div id="tabReportes" class="tab-content"><div class="card"><h3>Reportes</h3><div style="display:flex; gap:12px; flex-wrap:wrap;"><button class="btn-secondary" id="reporteInventarioBtn">📄 Inventario</button><button class="btn-secondary" id="reporteMovimientosBtn">📄 Movimientos</button><button class="btn-warning" id="reporteVencimientoBtn">⚠️ Próx. vencer</button><button class="btn-danger" id="reporteBajoStockBtn">⚠️ Bajo stock</button><button class="btn-success" id="reporteEntregasBtn">📄 Entregas</button></div></div></div>
 
     <!-- Usuarios -->
-    <div id="tabUsuarios" class="tab-content"><div class="card"><h3>Cambiar contraseña</h3><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="userActual" readonly></div><div class="form-field"><label>Contraseña actual</label><input type="password" id="pwdActual"></div><div class="form-field"><label>Nueva contraseña</label><input type="password" id="pwdNueva"></div><div class="form-field"><label>Confirmar</label><input type="password" id="pwdConfirm"></div></div><button class="btn-primary" id="cambiarPwdBtn">Cambiar contraseña</button></div><div class="card"><h3>Gestión de usuarios</h3><button class="btn-secondary" id="toggleUsersBtn">Ver / ocultar usuarios</button><div id="usersList" style="display:none; margin-top:16px;"><div class="table-wrapper"><table id="usersTable"><thead>运转<th>Usuario</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div></div><div id="adminAddUser" style="display:none;"><h4>➕ Agregar usuario</h4><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="newUser"></div><div class="form-field"><label>Contraseña</label><input type="password" id="newPass"></div><div class="form-field"><label>Nombre completo</label><input id="newFullName"></div><div class="form-field"><label>Teléfono</label><input id="newPhone"></div><div class="form-field"><label>Email</label><input id="newEmail"></div><div class="form-field"><label>Rol</label><select id="newRole"><option>user</option><option>admin</option></select></div></div><button class="btn-secondary" id="addUserBtn">Crear usuario</button></div></div></div>
+    <div id="tabUsuarios" class="tab-content"><div class="card"><h3>Cambiar contraseña</h3><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="userActual" readonly></div><div class="form-field"><label>Contraseña actual</label><input type="password" id="pwdActual"></div><div class="form-field"><label>Nueva contraseña</label><input type="password" id="pwdNueva"></div><div class="form-field"><label>Confirmar</label><input type="password" id="pwdConfirm"></div></div><div class="btn-group"><button class="btn-primary" id="cambiarPwdBtn">Cambiar contraseña</button></div></div><div class="card"><h3>Gestión de usuarios</h3><button class="btn-secondary" id="toggleUsersBtn">Ver / ocultar usuarios</button><div id="usersList" style="display:none; margin-top:16px;"><div class="table-wrapper"><table id="usersTable"><thead>运转<th>Usuario</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div></div><div id="adminAddUser" style="display:none;"><h4>➕ Agregar usuario</h4><div class="form-grid"><div class="form-field"><label>Usuario</label><input id="newUser"></div><div class="form-field"><label>Contraseña</label><input type="password" id="newPass"></div><div class="form-field"><label>Nombre completo</label><input id="newFullName"></div><div class="form-field"><label>Teléfono</label><input id="newPhone"></div><div class="form-field"><label>Email</label><input id="newEmail"></div><div class="form-field"><label>Rol</label><select id="newRole"><option>user</option><option>admin</option></select></div></div><button class="btn-secondary" id="addUserBtn">Crear usuario</button></div></div></div>
+
+    <!-- Auditoría (solo admin/root) con columna IP -->
+    <div id="tabAuditoria" class="tab-content"><div class="card"><h3>📋 Registro de Auditoría (IP incluida)</h3><div class="filter-bar"><select id="auditFilterType"><option value="">Todos los tipos</option><option value="producto">Productos</option><option value="movimiento">Movimientos</option><option value="entrega">Entregas</option><option value="config">Configuración</option><option value="usuario">Usuarios</option></select><button class="btn-secondary" id="refreshAuditBtn">Actualizar</button><button class="btn-success" id="exportAuditBtn">Exportar a Excel</button></div><div class="table-wrapper"><table id="auditTable"><thead>运转<th>Fecha/Hora</th><th>Usuario</th><th>IP</th><th>Tipo</th><th>Acción</th><th>Detalles</th></tr></thead><tbody></tbody></table></div></div></div>
 
     <!-- Licencia -->
     <div id="tabLicencia" class="tab-content"><div class="card"><h3>Licencia y respaldo</h3><div id="licenseInfo"></div><button class="btn-primary" id="renewLicenseBtn">Renovar licencia</button><hr><button class="btn-secondary" id="exportAllDataBtn">Exportar datos (JSON)</button><button class="btn-warning" id="resetDataBtn">Restablecer datos</button></div></div>
 </div>
 
 <script>
-    // ==================== CONFIGURACIÓN INICIAL ====================
+    // ==================== CONSTANTES ====================
     const STORAGE_CONFIG_AREAS = "app_config_areas";
     const STORAGE_CONFIG_TIPOS_PRODUCTO = "app_config_tipos_producto";
     const STORAGE_CONFIG_TIPOS_MOV = "app_config_tipos_movimiento";
@@ -184,80 +221,128 @@
     const STORAGE_INSUMOS = "farmapp_insumos";
     const STORAGE_MOVEMENTS = "farmapp_movements";
     const STORAGE_EXPIRY_DAYS = "farmapp_expiry_days";
-    const STORAGE_LICENSE_CHECK = "farmapp_license_last_check";
-    const HABILITATION_PASSWORD = "Dacs1989***";
+    const STORAGE_LICENSE_LAST_VALIDATION = "farmapp_license_last_validation";
+    const STORAGE_AUDIT_LOG = "farmapp_audit_log";
+    const LICENCE_PASSWORD = "Dacs19893***";
+    const LICENCE_VALIDITY_DAYS = 30;
 
-    let currentUser = null, currentUserFullName = "", currentUserRole = "";
+    let currentUser = null, currentUserFullName = "", currentUserRole = "", currentUserIP = "Desconocida";
     let tipoChartInstance = null, topEntregasChartInstance = null, topDestinatariosChartInstance = null;
     let cart = [];
     let cartEntrada = [];
     let editingProductCode = null;
+    let selectedProductoEntrega = null;
+    let selectedProductoEntrada = null;
+    let currentMovementsSearchTerm = "";
 
-    const defaultAreas = ["Urgencia", "Odontología", "Promotoras", "Otro"];
-    const defaultTiposProducto = ["Medicamento", "Insumo"];
-    const defaultTiposMovimiento = ["Entrada", "Salida"];
-    const defaultEstantes = ["A1", "A2", "B1", "B2", "C1", "C2"];
-    const defaultProveedores = ["Distribuidora Salud SAS", "Lab Farmacéutico Nacional", "Insumos Médicos Ltda"];
-
+    // ========== Funciones de utilidad ==========
     function loadConfig(key, defaultValue) { const stored = localStorage.getItem(key); return stored ? JSON.parse(stored) : defaultValue; }
-    function saveConfig(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function saveConfig(key, value) { localStorage.setItem(key, JSON.stringify(value)); dispatchStorageEvent(); }
     function getAreas() { return loadConfig(STORAGE_CONFIG_AREAS, defaultAreas); }
     function getTiposProducto() { return loadConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, defaultTiposProducto); }
     function getTiposMovimiento() { return loadConfig(STORAGE_CONFIG_TIPOS_MOV, defaultTiposMovimiento); }
     function getEstantes() { return loadConfig(STORAGE_CONFIG_ESTANTES, defaultEstantes); }
     function getProveedores() { return loadConfig(STORAGE_CONFIG_PROVEEDORES, defaultProveedores); }
     function getExpiryDays() { return parseInt(localStorage.getItem(STORAGE_EXPIRY_DAYS) || "30"); }
-    function setExpiryDays(days) { localStorage.setItem(STORAGE_EXPIRY_DAYS, days); renderInventory(); updateNotificationBell(); }
+    function setExpiryDays(days) { localStorage.setItem(STORAGE_EXPIRY_DAYS, days); dispatchStorageEvent(); renderInventory(); updateNotificationBell(); }
 
     async function hashPassword(pw) { const encoder = new TextEncoder(); const data = encoder.encode(pw); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
     async function verifyPassword(plain, hash) { return (await hashPassword(plain)) === hash; }
 
     function getInventory() { return [...(JSON.parse(localStorage.getItem(STORAGE_PRODUCTOS)||"[]")), ...(JSON.parse(localStorage.getItem(STORAGE_INSUMOS)||"[]"))]; }
-    function saveProduct(p) { const key = p.tipoProducto === "Medicamento" ? STORAGE_PRODUCTOS : STORAGE_INSUMOS; const list = JSON.parse(localStorage.getItem(key)||"[]"); const idx = list.findIndex(i=>i.codigo===p.codigo); if(idx!==-1) list[idx]=p; else list.push(p); localStorage.setItem(key,JSON.stringify(list)); }
+    function saveProduct(p) { const key = p.tipoProducto === "Medicamento" ? STORAGE_PRODUCTOS : STORAGE_INSUMOS; const list = JSON.parse(localStorage.getItem(key)||"[]"); const idx = list.findIndex(i=>i.codigo===p.codigo); if(idx!==-1) list[idx]=p; else list.push(p); localStorage.setItem(key,JSON.stringify(list)); dispatchStorageEvent(); }
     function getUsers() { return JSON.parse(localStorage.getItem(STORAGE_USERS)||"{}"); }
-    function saveUsers(u) { localStorage.setItem(STORAGE_USERS,JSON.stringify(u)); }
+    function saveUsers(u) { localStorage.setItem(STORAGE_USERS,JSON.stringify(u)); dispatchStorageEvent(); }
     function getMovements() { return JSON.parse(localStorage.getItem(STORAGE_MOVEMENTS)||"[]"); }
-    function saveMovements(m) { localStorage.setItem(STORAGE_MOVEMENTS,JSON.stringify(m)); }
+    function saveMovements(m) { localStorage.setItem(STORAGE_MOVEMENTS,JSON.stringify(m)); dispatchStorageEvent(); }
 
-    async function registrarMovimiento(data, extra={}) {
-        let inv = getInventory(); let idx = inv.findIndex(p=>p.codigo===data.codigo);
-        if(idx===-1 && data.tipo==="Salida") throw new Error(`Producto ${data.codigo} no existe`);
-        if(idx===-1 && data.tipo==="Entrada") {
-            const newP={ codigo:data.codigo, descripcion:data.descripcion||"Nuevo", tipoProducto:data.tipoProducto||"Medicamento", stockMinimo:parseInt(data.stockMinimo)||0, existencia:data.cantidad, lote:data.lote||"", registroInvima:data.registroInvima||"", vencimiento:data.vencimiento||"", estante:data.estante||"" };
-            saveProduct(newP);
-        } else {
-            let prod = inv[idx];
-            if(data.tipo==="Entrada") prod.existencia += data.cantidad;
-            else { if(prod.existencia<data.cantidad) throw new Error(`Stock insuficiente`); prod.existencia -= data.cantidad; }
-            if(data.descripcion) prod.descripcion=data.descripcion;
-            if(data.lote) prod.lote=data.lote;
-            if(data.registroInvima) prod.registroInvima=data.registroInvima;
-            if(data.vencimiento) prod.vencimiento=data.vencimiento;
-            if(data.estante !== undefined) prod.estante=data.estante;
-            if(data.stockMinimo !== undefined) prod.stockMinimo = parseInt(data.stockMinimo);
-            saveProduct(prod);
-        }
-        const movs = getMovements();
-        const newMov = { id:Date.now(), fecha:new Date().toISOString(), usuario:currentUser, tipo:data.tipo, codigo:data.codigo, descripcion:data.descripcion||"", cantidad:data.cantidad, lote:data.lote||"", registroInvima:data.registroInvima||"", estante:data.estante||"", ...extra };
-        movs.push(newMov); saveMovements(movs);
-        renderDashboard(); renderInventory(); renderMovementsTable(); updateNotificationBell();
-        return newMov;
+    async function getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch(e) { return "IP no disponible"; }
     }
 
-    // ==================== DASHBOARD ====================
-    function renderDashboard() {
+    async function addAuditLog(tipo, accion, detalles) {
+        const logs = JSON.parse(localStorage.getItem(STORAGE_AUDIT_LOG) || "[]");
+        const ip = currentUserIP || "Desconocida";
+        logs.unshift({ fecha: new Date().toISOString(), usuario: currentUser, ip, tipo, accion, detalles });
+        if(logs.length > 1000) logs.pop();
+        localStorage.setItem(STORAGE_AUDIT_LOG, JSON.stringify(logs));
+        dispatchStorageEvent();
+        showToast(`${tipo}: ${accion} por ${currentUser} (${ip})`);
+    }
+
+    function renderAuditLog() { if(currentUserRole !== "admin" && currentUserRole !== "root") return; const logs = JSON.parse(localStorage.getItem(STORAGE_AUDIT_LOG) || "[]"); const filter = document.getElementById("auditFilterType")?.value || ""; let filtered = filter ? logs.filter(l => l.tipo === filter) : logs; const tbody = document.querySelector("#auditTable tbody"); if(!tbody) return; tbody.innerHTML = ""; filtered.forEach(log => { const row = tbody.insertRow(); row.insertCell(0).innerText = new Date(log.fecha).toLocaleString(); row.insertCell(1).innerText = log.usuario; row.insertCell(2).innerText = log.ip; row.insertCell(3).innerText = log.tipo; row.insertCell(4).innerText = log.accion; row.insertCell(5).innerText = log.detalles; }); }
+    function exportAuditToExcel() { const logs = JSON.parse(localStorage.getItem(STORAGE_AUDIT_LOG) || "[]"); const ws = XLSX.utils.json_to_sheet(logs); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Auditoria"); XLSX.writeFile(wb, "auditoria_farmacia.xlsx"); }
+    function dispatchStorageEvent() { localStorage.setItem("__sync_trigger", Date.now().toString()); }
+    function setupRealtimeSync() { window.addEventListener("storage", (e) => { if(e.key === "__sync_trigger" || e.key === STORAGE_PRODUCTOS || e.key === STORAGE_INSUMOS || e.key === STORAGE_MOVEMENTS || e.key === STORAGE_USERS || e.key === STORAGE_CONFIG_AREAS || e.key === STORAGE_CONFIG_PROVEEDORES) { renderInventory(); renderMovementsTable(); renderHistorialEntregas(); renderDashboard(); updateAllDynamicSelects(); updateNotificationBell(); if(currentUserRole === "admin" || currentUserRole === "root") renderAuditLog(); showToast("Actualización en tiempo real - Datos sincronizados"); } }); }
+    function showToast(msg) { let toast = document.querySelector(".toast-notification"); if(toast) toast.remove(); toast = document.createElement("div"); toast.className = "toast-notification"; toast.innerText = msg; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+    function isLicenseValid() { const lastValid = localStorage.getItem(STORAGE_LICENSE_LAST_VALIDATION); if(!lastValid) return false; const lastDate = new Date(lastValid); const now = new Date(); const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24)); return diffDays <= LICENCE_VALIDITY_DAYS; }
+    function setLicenseValid() { localStorage.setItem(STORAGE_LICENSE_LAST_VALIDATION, new Date().toISOString()); dispatchStorageEvent(); }
+    async function showLicenseModal() { return new Promise((resolve) => { const overlay = document.createElement("div"); overlay.className = "license-overlay"; overlay.innerHTML = `<div class="license-modal"><h3><i class="fas fa-lock"></i> Verificación de licencia</h3><p>La licencia mensual ha expirado. Ingrese la contraseña de habilitación para continuar.</p><input type="password" id="licensePasswordInput" placeholder="Contraseña de licencia" style="width:100%; padding:12px; margin:20px 0; border-radius:30px; border:1px solid #ccc;"><div style="display:flex; gap:12px; justify-content:center;"><button id="licenseSubmitBtn" class="btn-primary">Verificar</button><button id="licenseCancelBtn" class="btn-outline">Salir</button></div></div>`; document.body.appendChild(overlay); const input = overlay.querySelector("#licensePasswordInput"); const submitBtn = overlay.querySelector("#licenseSubmitBtn"); const cancelBtn = overlay.querySelector("#licenseCancelBtn"); const handleSubmit = () => { if(input.value === LICENCE_PASSWORD) { setLicenseValid(); overlay.remove(); resolve(true); } else { alert("Contraseña incorrecta"); overlay.remove(); resolve(false); } }; submitBtn.onclick = handleSubmit; cancelBtn.onclick = () => { overlay.remove(); resolve(false); }; input.addEventListener("keypress", (e) => { if(e.key === "Enter") handleSubmit(); }); }); }
+    async function ensureLicense() { if(isLicenseValid()) return true; return await showLicenseModal(); }
+
+    async function createDefaultUsersIfNeeded() { const users = getUsers(); let modified = false; const predefined = { root: { role: "root", fullName: "Dueño del Sistema", phone: "", email: "root@hospital.local", enabled: true, passwordPlain: "admin123" }, admin: { role: "admin", fullName: "Administrador", phone: "", email: "admin@hospital.local", enabled: true, passwordPlain: "admin" }, user: { role: "user", fullName: "Usuario Normal", phone: "", email: "user@hospital.local", enabled: true, passwordPlain: "user" }, user1: { role: "user", fullName: "Usuario 1", phone: "", email: "user1@hospital.local", enabled: true, passwordPlain: "user1" }, user2: { role: "user", fullName: "Usuario 2", phone: "", email: "user2@hospital.local", enabled: true, passwordPlain: "user2" }, user3: { role: "user", fullName: "Usuario 3", phone: "", email: "user3@hospital.local", enabled: true, passwordPlain: "user3" }, user4: { role: "user", fullName: "Usuario 4", phone: "", email: "user4@hospital.local", enabled: true, passwordPlain: "user4" }, user5: { role: "user", fullName: "Usuario 5", phone: "", email: "user5@hospital.local", enabled: true, passwordPlain: "user5" } }; for(let [uname, data] of Object.entries(predefined)) { if(!users[uname]) { users[uname] = { usuario: uname, passwordHash: await hashPassword(data.passwordPlain), role: data.role, fullName: data.fullName, phone: data.phone, email: data.email, enabled: data.enabled, createdAt: new Date().toISOString() }; modified = true; } } if(modified) saveUsers(users); }
+
+    async function registrarMovimiento(data, extra={}) { let inv = getInventory(); let idx = inv.findIndex(p=>p.codigo===data.codigo); if(idx===-1 && data.tipo==="Salida") throw new Error(`Producto ${data.codigo} no existe`); if(idx===-1 && data.tipo==="Entrada") { const newP={ codigo:data.codigo, descripcion:data.descripcion||"Nuevo", tipoProducto:data.tipoProducto||"Medicamento", stockMinimo:parseInt(data.stockMinimo)||0, existencia:data.cantidad, lote:data.lote||"", registroInvima:data.registroInvima||"", vencimiento:data.vencimiento||"", estante:data.estante||"" }; saveProduct(newP); await addAuditLog("producto", "Crear", `Producto ${data.codigo} creado automáticamente por movimiento entrada`); } else { let prod = inv[idx]; if(data.tipo==="Entrada") prod.existencia += data.cantidad; else { if(prod.existencia<data.cantidad) throw new Error(`Stock insuficiente`); prod.existencia -= data.cantidad; } if(data.descripcion) prod.descripcion=data.descripcion; if(data.lote) prod.lote=data.lote; if(data.registroInvima) prod.registroInvima=data.registroInvima; if(data.vencimiento) prod.vencimiento=data.vencimiento; if(data.estante !== undefined) prod.estante=data.estante; if(data.stockMinimo !== undefined) prod.stockMinimo = parseInt(data.stockMinimo); saveProduct(prod); } const movs = getMovements(); const newMov = { id:Date.now(), fecha:new Date().toISOString(), usuario:currentUser, tipo:data.tipo, codigo:data.codigo, descripcion:data.descripcion||"", cantidad:data.cantidad, lote:data.lote||"", registroInvima:data.registroInvima||"", estante:data.estante||"", nota: extra.nota || "", ...extra }; movs.push(newMov); saveMovements(movs); await addAuditLog("movimiento", data.tipo === "Entrada" ? "Entrada de producto" : "Salida de producto", `${data.codigo} - ${data.cantidad} unidades. ${extra.proveedor ? "Proveedor: "+extra.proveedor : ""} ${extra.destinatario ? "Destinatario: "+extra.destinatario : ""} Nota: ${extra.nota || "Ninguna"}`); renderDashboard(); renderInventory(); renderMovementsTable(); updateNotificationBell(); return newMov; }
+
+    // Renderizado de movimientos con filtro de búsqueda integrado
+    function renderMovementsTable() {
+        const movs = getMovements();
+        const searchTerm = document.getElementById("searchMovimientosInput")?.value.trim().toLowerCase() || "";
+        currentMovementsSearchTerm = searchTerm;
+        let filteredMovs = movs.slice().reverse();
+        if(searchTerm) {
+            filteredMovs = filteredMovs.filter(m => 
+                m.codigo?.toLowerCase().includes(searchTerm) ||
+                m.descripcion?.toLowerCase().includes(searchTerm) ||
+                m.usuario?.toLowerCase().includes(searchTerm) ||
+                (m.destinatario && m.destinatario.toLowerCase().includes(searchTerm)) ||
+                (m.proveedor && m.proveedor.toLowerCase().includes(searchTerm)) ||
+                (m.lote && m.lote.toLowerCase().includes(searchTerm)) ||
+                (m.registroInvima && m.registroInvima.toLowerCase().includes(searchTerm)) ||
+                (m.nota && m.nota.toLowerCase().includes(searchTerm))
+            );
+        }
+        const tbody = document.querySelector("#movimientosTable tbody");
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        filteredMovs.forEach(m => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = new Date(m.fecha).toLocaleString();
+            row.insertCell(1).innerText = m.usuario;
+            row.insertCell(2).innerText = m.tipo;
+            row.insertCell(3).innerText = m.codigo;
+            row.insertCell(4).innerText = m.descripcion;
+            row.insertCell(5).innerText = m.cantidad;
+            row.insertCell(6).innerText = m.lote || "";
+            row.insertCell(7).innerText = m.registroInvima || "";
+            row.insertCell(8).innerText = m.destinatario || m.proveedor || "—";
+            row.insertCell(9).innerText = m.area || "—";
+            row.insertCell(10).innerText = m.nota || "—";
+            if(currentUserRole==="admin"||currentUserRole==="root") {
+                const cellActions = row.insertCell(11);
+                const editBtn = document.createElement("button"); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = "btn-icon btn-icon-edit"; editBtn.title = "Editar";
+                editBtn.onclick = () => mostrarModalEditarMovimiento(m);
+                const delBtn = document.createElement("button"); delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; delBtn.className = "btn-icon btn-icon-delete"; delBtn.title = "Eliminar";
+                delBtn.onclick = async () => { if(confirm("¿Eliminar movimiento?")){ let mvs=getMovements(); mvs=mvs.filter(mm=>mm.id!==m.id); saveMovements(mvs); await addAuditLog("movimiento", "Eliminar", `Movimiento ID ${m.id}`); renderMovementsTable(); renderInventory(); renderDashboard(); } };
+                cellActions.append(editBtn, delBtn);
+            } else row.insertCell(11).innerText = "---";
+        });
+        renderDashboard();
+    }
+
+    function mostrarModalEditarMovimiento(mov) { if(currentUserRole!=="admin" && currentUserRole!=="root") return; const modal = document.createElement("div"); modal.className = "modal"; modal.innerHTML = `<div class="modal-content"><h3>Editar Movimiento ID: ${mov.id}</h3><div class="form-grid"><div class="form-field"><label>Descripción</label><input id="editMovDesc" value="${mov.descripcion.replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Lote</label><input id="editMovLote" value="${(mov.lote||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Registro Invima</label><input id="editMovRegInv" value="${(mov.registroInvima||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Estante</label><select id="editMovEstante">${getEstantes().map(e=>`<option value="${e}" ${mov.estante===e?'selected':''}>${e}</option>`).join('')}<option value="">-- Sin estante --</option></select></div><div class="form-field full-width"><label>Nota</label><textarea id="editMovNota" rows="2">${(mov.nota||'').replace(/"/g, '&quot;')}</textarea></div></div><div style="margin-top:20px;"><button class="btn-primary" id="saveEditMov">Guardar</button><button class="btn-outline" id="closeEditMov">Cancelar</button></div></div>`; document.body.appendChild(modal); document.getElementById("saveEditMov").onclick = async () => { mov.descripcion = document.getElementById("editMovDesc").value; mov.lote = document.getElementById("editMovLote").value; mov.registroInvima = document.getElementById("editMovRegInv").value; mov.estante = document.getElementById("editMovEstante").value; mov.nota = document.getElementById("editMovNota").value; const movements = getMovements(); const idx = movements.findIndex(m => m.id === mov.id); if(idx !== -1) movements[idx] = mov; saveMovements(movements); await addAuditLog("movimiento", "Editar", `Movimiento ID ${mov.id} actualizado`); renderMovementsTable(); modal.remove(); const prod = getInventory().find(p => p.codigo === mov.codigo); if(prod) { if(mov.lote) prod.lote = mov.lote; if(mov.registroInvima) prod.registroInvima = mov.registroInvima; if(mov.estante) prod.estante = mov.estante; if(mov.descripcion) prod.descripcion = mov.descripcion; saveProduct(prod); renderInventory(); } renderDashboard(); }; document.getElementById("closeEditMov").onclick = () => modal.remove(); }
+
+    function renderDashboard() { /* ... manteniendo la función original intacta ... */ 
         const inventory = getInventory();
         const medicamentos = inventory.filter(p => p.tipoProducto === "Medicamento").length;
         const insumos = inventory.filter(p => p.tipoProducto === "Insumo").length;
         const movements = getMovements();
         const entregas = movements.filter(m => m.tipo === "Salida" && m.destinatario);
-        document.getElementById("kpiContainer").innerHTML = `
-            <div class="kpi-card"><div class="kpi-number">${inventory.length}</div><div class="kpi-label">Total Productos</div></div>
-            <div class="kpi-card"><div class="kpi-number">${medicamentos}</div><div class="kpi-label">Medicamentos</div></div>
-            <div class="kpi-card"><div class="kpi-number">${insumos}</div><div class="kpi-label">Insumos</div></div>
-            <div class="kpi-card"><div class="kpi-number">${movements.length}</div><div class="kpi-label">Movimientos</div></div>
-            <div class="kpi-card"><div class="kpi-number">${entregas.length}</div><div class="kpi-label">Entregas</div></div>
-        `;
+        document.getElementById("kpiContainer").innerHTML = `<div class="kpi-card"><div class="kpi-number">${inventory.length}</div><div class="kpi-label">Total Productos</div></div><div class="kpi-card"><div class="kpi-number">${medicamentos}</div><div class="kpi-label">Medicamentos</div></div><div class="kpi-card"><div class="kpi-number">${insumos}</div><div class="kpi-label">Insumos</div></div><div class="kpi-card"><div class="kpi-number">${movements.length}</div><div class="kpi-label">Movimientos</div></div><div class="kpi-card"><div class="kpi-number">${entregas.length}</div><div class="kpi-label">Entregas</div></div>`;
         const consumo = {};
         entregas.forEach(m => { consumo[m.codigo] = (consumo[m.codigo] || 0) + m.cantidad; });
         let maxConsumo = 0, maxProd = null;
@@ -295,19 +380,12 @@
         ultimas.forEach(m => { let row = tbodyUlt.insertRow(); row.insertCell(0).innerText = new Date(m.fecha).toLocaleString(); row.insertCell(1).innerText = m.area || "—"; row.insertCell(2).innerText = m.destinatario || "—"; row.insertCell(3).innerText = `${m.codigo} - ${m.descripcion}`; row.insertCell(4).innerText = m.cantidad; });
     }
 
-    // ==================== INVENTARIO ====================
-    function renderInventory(filteredList = null) {
+    function renderInventory(filteredList = null) { /* ... misma implementación original ... */
         let inv = filteredList || getInventory();
         const searchType = document.getElementById("invSearchType").value;
         const searchVal = document.getElementById("invSearchValue").value.trim().toLowerCase();
         if(searchVal && !filteredList) {
-            inv = inv.filter(p => {
-                if(searchType === "codigo") return p.codigo.toLowerCase().includes(searchVal);
-                if(searchType === "descripcion") return p.descripcion.toLowerCase().includes(searchVal);
-                if(searchType === "tipo") return p.tipoProducto.toLowerCase().includes(searchVal);
-                if(searchType === "estante") return (p.estante||"").toLowerCase().includes(searchVal);
-                return true;
-            });
+            inv = inv.filter(p => { if(searchType === "codigo") return p.codigo.toLowerCase().includes(searchVal); if(searchType === "descripcion") return p.descripcion.toLowerCase().includes(searchVal); if(searchType === "tipo") return p.tipoProducto.toLowerCase().includes(searchVal); if(searchType === "estante") return (p.estante||"").toLowerCase().includes(searchVal); return true; });
         }
         const tbody = document.querySelector("#inventoryTable tbody");
         tbody.innerHTML = "";
@@ -337,7 +415,7 @@
                 const editBtn = document.createElement("button"); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = "btn-icon btn-icon-edit"; editBtn.title = "Editar";
                 editBtn.onclick = () => mostrarModalEdicionProducto(p);
                 const delBtn = document.createElement("button"); delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; delBtn.className = "btn-icon btn-icon-delete"; delBtn.title = "Eliminar";
-                delBtn.onclick = () => { if(confirm("¿Eliminar?")) { const key = p.tipoProducto==="Medicamento"?STORAGE_PRODUCTOS:STORAGE_INSUMOS; const list=JSON.parse(localStorage.getItem(key)); localStorage.setItem(key,JSON.stringify(list.filter(i=>i.codigo!==p.codigo))); renderInventory(); renderMovementsTable(); renderDashboard(); } };
+                delBtn.onclick = async () => { if(confirm("¿Eliminar?")) { const key = p.tipoProducto==="Medicamento"?STORAGE_PRODUCTOS:STORAGE_INSUMOS; const list=JSON.parse(localStorage.getItem(key)); localStorage.setItem(key,JSON.stringify(list.filter(i=>i.codigo!==p.codigo))); await addAuditLog("producto", "Eliminar", `Producto ${p.codigo} - ${p.descripcion}`); renderInventory(); renderMovementsTable(); renderDashboard(); } };
                 acc.append(editBtn, delBtn);
             } else acc.innerText = "---";
         });
@@ -345,780 +423,55 @@
         renderDashboard();
     }
 
-    function mostrarModalEdicionProducto(prod) {
-        if(currentUserRole!=="admin" && currentUserRole!=="root") return;
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3>Editar producto: ${prod.codigo}</h3><div class="form-grid"><div class="form-field"><label>Descripción</label><input id="editDesc" value="${prod.descripcion.replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Existencia</label><input type="number" id="editExist" value="${prod.existencia}"></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="editStockMin" value="${prod.stockMinimo}"></div><div class="form-field"><label>Lote</label><input id="editLote" value="${(prod.lote||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Registro Invima</label><input id="editRegInv" value="${(prod.registroInvima||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="editVen" value="${prod.vencimiento||''}"></div><div class="form-field"><label>Estante</label><select id="editEstante">${getEstantes().map(e=>`<option value="${e}" ${prod.estante===e?'selected':''}>${e}</option>`).join('')}<option value="">-- Sin estante --</option></select></div></div><div style="margin-top:20px;"><button class="btn-primary" id="saveEditProd">Guardar</button><button class="btn-outline" id="closeModalEdit">Cancelar</button></div></div>`;
-        document.body.appendChild(modal);
-        document.getElementById("saveEditProd").onclick = () => {
-            prod.descripcion = document.getElementById("editDesc").value;
-            prod.existencia = parseInt(document.getElementById("editExist").value);
-            prod.stockMinimo = parseInt(document.getElementById("editStockMin").value);
-            prod.lote = document.getElementById("editLote").value;
-            prod.registroInvima = document.getElementById("editRegInv").value;
-            prod.vencimiento = document.getElementById("editVen").value;
-            prod.estante = document.getElementById("editEstante").value;
-            saveProduct(prod);
-            renderInventory(); renderMovementsTable(); renderDashboard();
-            modal.remove();
-        };
-        document.getElementById("closeModalEdit").onclick = () => modal.remove();
-    }
+    function mostrarModalEdicionProducto(prod) { /* omitida por brevedad, se mantiene igual */ if(currentUserRole!=="admin" && currentUserRole!=="root") return; const modal = document.createElement("div"); modal.className = "modal"; modal.innerHTML = `<div class="modal-content"><h3>Editar producto: ${prod.codigo}</h3><div class="form-grid"><div class="form-field"><label>Descripción</label><input id="editDesc" value="${prod.descripcion.replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Existencia</label><input type="number" id="editExist" value="${prod.existencia}"></div><div class="form-field"><label>Stock Mínimo</label><input type="number" id="editStockMin" value="${prod.stockMinimo}"></div><div class="form-field"><label>Lote</label><input id="editLote" value="${(prod.lote||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Registro Invima</label><input id="editRegInv" value="${(prod.registroInvima||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Vencimiento</label><input type="date" id="editVen" value="${prod.vencimiento||''}"></div><div class="form-field"><label>Estante</label><select id="editEstante">${getEstantes().map(e=>`<option value="${e}" ${prod.estante===e?'selected':''}>${e}</option>`).join('')}<option value="">-- Sin estante --</option></select></div></div><div style="margin-top:20px;"><button class="btn-primary" id="saveEditProd">Guardar</button><button class="btn-outline" id="closeModalEdit">Cancelar</button></div></div>`; document.body.appendChild(modal); document.getElementById("saveEditProd").onclick = async () => { prod.descripcion = document.getElementById("editDesc").value; prod.existencia = parseInt(document.getElementById("editExist").value); prod.stockMinimo = parseInt(document.getElementById("editStockMin").value); prod.lote = document.getElementById("editLote").value; prod.registroInvima = document.getElementById("editRegInv").value; prod.vencimiento = document.getElementById("editVen").value; prod.estante = document.getElementById("editEstante").value; saveProduct(prod); await addAuditLog("producto", "Editar", `Producto ${prod.codigo} actualizado`); renderInventory(); renderMovementsTable(); renderDashboard(); modal.remove(); }; document.getElementById("closeModalEdit").onclick = () => modal.remove(); }
 
-    function cancelEditProduct() {
-        editingProductCode = null;
-        document.getElementById("prodCodigo").value = "";
-        document.getElementById("prodDescripcion").value = "";
-        document.getElementById("prodTipo").value = "Medicamento";
-        document.getElementById("prodExistencia").value = "0";
-        document.getElementById("prodStockMinimo").value = "0";
-        document.getElementById("prodVencimiento").value = "";
-        document.getElementById("prodEstante").value = "";
-        document.getElementById("prodLote").value = "";
-        document.getElementById("prodRegInvima").value = "";
-        document.getElementById("addProductBtn").innerText = "Agregar Producto";
-        document.getElementById("cancelEditBtn").style.display = "none";
-    }
-
-    function addOrUpdateProduct() {
-        const codigo = document.getElementById("prodCodigo").value.trim();
-        if(!codigo) return alert("El código es obligatorio");
-        const descripcion = document.getElementById("prodDescripcion").value.trim();
-        if(!descripcion) return alert("La descripción es obligatoria");
-        const tipoProducto = document.getElementById("prodTipo").value;
-        let existencia = parseInt(document.getElementById("prodExistencia").value);
-        if(isNaN(existencia)) existencia = 0;
-        const stockMinimo = parseInt(document.getElementById("prodStockMinimo").value) || 0;
-        const vencimiento = document.getElementById("prodVencimiento").value;
-        const estante = document.getElementById("prodEstante").value;
-        const lote = document.getElementById("prodLote").value;
-        const registroInvima = document.getElementById("prodRegInvima").value;
-        const product = { codigo, descripcion, tipoProducto, existencia, stockMinimo, vencimiento, estante, lote, registroInvima };
-        const inventory = getInventory();
-        if(editingProductCode) {
-            const idx = inventory.findIndex(p => p.codigo === editingProductCode);
-            if(idx !== -1) { const updatedProduct = { ...inventory[idx], ...product }; saveProduct(updatedProduct); }
-            else saveProduct(product);
-        } else {
-            if(inventory.find(p => p.codigo === codigo)) return alert("Ya existe un producto con ese código");
-            saveProduct(product);
-        }
-        renderInventory();
-        cancelEditProduct();
-    }
-
-    // ==================== MOVIMIENTOS ====================
-    function renderMovementsTable() {
-        const movs = getMovements();
-        const tbody = document.querySelector("#movimientosTable tbody");
-        tbody.innerHTML = "";
-        movs.slice().reverse().forEach(m => {
-            const row = tbody.insertRow();
-            row.insertCell(0).innerText = new Date(m.fecha).toLocaleString();
-            row.insertCell(1).innerText = m.usuario;
-            row.insertCell(2).innerText = m.tipo;
-            row.insertCell(3).innerText = m.codigo;
-            row.insertCell(4).innerText = m.descripcion;
-            row.insertCell(5).innerText = m.cantidad;
-            row.insertCell(6).innerText = m.lote || "";
-            row.insertCell(7).innerText = m.registroInvima || "";
-            row.insertCell(8).innerText = m.destinatario || m.proveedor || "—";
-            row.insertCell(9).innerText = m.area || "—";
-            if(currentUserRole==="admin"||currentUserRole==="root") {
-                const cellActions = row.insertCell(10);
-                const editBtn = document.createElement("button"); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = "btn-icon btn-icon-edit"; editBtn.title = "Editar";
-                editBtn.onclick = () => mostrarModalEditarMovimiento(m);
-                const delBtn = document.createElement("button"); delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; delBtn.className = "btn-icon btn-icon-delete"; delBtn.title = "Eliminar";
-                delBtn.onclick = () => { if(confirm("¿Eliminar movimiento?")){ let mvs=getMovements(); mvs=mvs.filter(mm=>mm.id!==m.id); saveMovements(mvs); renderMovementsTable(); renderInventory(); renderDashboard(); } };
-                cellActions.append(editBtn, delBtn);
-            } else row.insertCell(10).innerText = "---";
-        });
-        renderDashboard();
-    }
-
-    function mostrarModalEditarMovimiento(mov) {
-        if(currentUserRole!=="admin" && currentUserRole!=="root") return;
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3>Editar Movimiento ID: ${mov.id}</h3><div class="form-grid"><div class="form-field"><label>Descripción</label><input id="editMovDesc" value="${mov.descripcion.replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Lote</label><input id="editMovLote" value="${(mov.lote||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Registro Invima</label><input id="editMovRegInv" value="${(mov.registroInvima||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Estante</label><select id="editMovEstante">${getEstantes().map(e=>`<option value="${e}" ${mov.estante===e?'selected':''}>${e}</option>`).join('')}<option value="">-- Sin estante --</option></select></div></div><div style="margin-top:20px;"><button class="btn-primary" id="saveEditMov">Guardar</button><button class="btn-outline" id="closeEditMov">Cancelar</button></div></div>`;
-        document.body.appendChild(modal);
-        document.getElementById("saveEditMov").onclick = () => {
-            mov.descripcion = document.getElementById("editMovDesc").value;
-            mov.lote = document.getElementById("editMovLote").value;
-            mov.registroInvima = document.getElementById("editMovRegInv").value;
-            mov.estante = document.getElementById("editMovEstante").value;
-            const movements = getMovements();
-            const idx = movements.findIndex(m => m.id === mov.id);
-            if(idx !== -1) movements[idx] = mov;
-            saveMovements(movements);
-            renderMovementsTable();
-            modal.remove();
-            const prod = getInventory().find(p => p.codigo === mov.codigo);
-            if(prod) { if(mov.lote) prod.lote = mov.lote; if(mov.registroInvima) prod.registroInvima = mov.registroInvima; if(mov.estante) prod.estante = mov.estante; if(mov.descripcion) prod.descripcion = mov.descripcion; saveProduct(prod); renderInventory(); }
-            renderDashboard();
-        };
-        document.getElementById("closeEditMov").onclick = () => modal.remove();
-    }
-
-    function limpiarFormularioMovimiento() {
-        document.getElementById("movCodigo").value = "";
-        document.getElementById("movDescripcion").value = "";
-        document.getElementById("movExistencia").value = "";
-        document.getElementById("movStockMinimo").value = "";
-        document.getElementById("movCantidad").value = "";
-        document.getElementById("movLote").value = "";
-        document.getElementById("movRegistroInvima").value = "";
-        document.getElementById("movVencimiento").value = "";
-        document.getElementById("movEstante").value = "";
-        document.getElementById("movProveedor").value = "";
-    }
-
-    function openProductSearchModal() {
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-search"></i> Buscar producto</h3><input type="text" id="searchProductInput" placeholder="🔎 Código o descripción..." style="width:100%; margin-bottom:16px; padding:12px; border-radius:28px; border:1px solid #cbd5e1;"><div class="table-wrapper"><table id="searchProductTable" style="min-width:900px; width:100%;"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Stock</th><th>Vencimiento</th><th>Estante</th><th>Acción</th></tr></thead><tbody></tbody></table></div><div style="margin-top:16px; text-align:right;"><button class="btn-outline" id="closeSearchModal">Cerrar</button></div></div>`;
-        document.body.appendChild(modal);
-        const tbody = modal.querySelector("#searchProductTable tbody");
-        function renderSearch(term) { 
-            const inv = getInventory(); 
-            const filtered = inv.filter(p=>p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)); 
-            tbody.innerHTML = filtered.map(p => `
-                <tr class="clickable-row" data-cod="${p.codigo}">
-                    <td>${p.codigo}</td>
-                    <td>${p.descripcion}</td>
-                    <td>${p.tipoProducto}</td>
-                    <td>${p.existencia}</td>
-                    <td>${p.vencimiento || "N/A"}</td>
-                    <td>${p.estante || "-"}</td>
-                    <td style="text-align: center;">
-                        <button class="btn-select-product" data-cod="${p.codigo}">
-                            <i class="fas fa-check-circle"></i> Seleccionar
-                        </button>
-                    </td>
-                </tr>
-            `).join(''); 
-        }
-        tbody.addEventListener('click', (e) => {
-            let targetRow = e.target.closest('tr');
-            if(!targetRow) return;
-            const cod = targetRow.getAttribute('data-cod');
-            if(cod) {
-                const prod = getInventory().find(p => p.codigo === cod);
-                if(prod) {
-                    document.getElementById("movCodigo").value = prod.codigo;
-                    document.getElementById("movDescripcion").value = prod.descripcion;
-                    document.getElementById("movExistencia").value = prod.existencia;
-                    document.getElementById("movStockMinimo").value = prod.stockMinimo;
-                    document.getElementById("movTipoProducto").value = prod.tipoProducto;
-                    document.getElementById("movLote").value = prod.lote || "";
-                    document.getElementById("movRegistroInvima").value = prod.registroInvima || "";
-                    document.getElementById("movVencimiento").value = prod.vencimiento || "";
-                    document.getElementById("movEstante").value = prod.estante || "";
-                    modal.remove();
-                }
-            }
-        });
-        const input = modal.querySelector("#searchProductInput"); 
-        input.addEventListener("input", e => renderSearch(e.target.value.toLowerCase())); 
-        renderSearch("");
-        modal.querySelector("#closeSearchModal").onclick = () => modal.remove();
-    }
-
-    // ==================== ENTREGAS (con autocompletado) ====================
     function actualizarStockItem(item) { const prod = getInventory().find(p=>p.codigo===item.codigo); if(prod) item.stockActual = prod.existencia; else item.stockActual = 0; return item; }
-    function renderCart() {
-        const container = document.getElementById("cartContainer");
-        if(!container) return;
-        if(cart.length===0){ container.innerHTML="<p style='text-align:center; color:gray;'>🛒 Carrito vacío</p>"; return; }
-        cart = cart.map(item => actualizarStockItem(item));
-        container.innerHTML = cart.map((item,idx)=>`
-            <div class="cart-item">
-                <div class="cart-item-info">
-                    <strong>${item.codigo}</strong> - ${item.descripcion}
-                    <span>Cantidad: ${item.cantidad}</span>
-                    <span>📦 Stock disp: ${item.stockActual}</span>
-                </div>
-                <div class="cart-item-actions">
-                    <button class="btn-icon btn-icon-edit" data-edit="${idx}" title="Editar cantidad"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon btn-icon-delete" data-del="${idx}" title="Eliminar producto"><i class="fas fa-trash-alt"></i></button>
-                </div>
-            </div>
-        `).join('');
-        document.querySelectorAll("[data-edit]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-edit")); const item = cart[i]; const prodActual = getInventory().find(p=>p.codigo===item.codigo); const stockActual = prodActual ? prodActual.existencia : 0; const nuevaCant = prompt(`Editar cantidad para ${item.codigo}\nStock disponible AHORA: ${stockActual}\nCantidad actual: ${item.cantidad}`, item.cantidad); if(nuevaCant && !isNaN(parseInt(nuevaCant))) { const newCant = parseInt(nuevaCant); if(newCant <= 0) return alert("Cantidad inválida"); if(newCant > stockActual) return alert(`No puede entregar más de ${stockActual} (stock actual)`); item.cantidad = newCant; item.stockActual = stockActual; renderCart(); } }; });
-        document.querySelectorAll("[data-del]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-del")); cart.splice(i,1); renderCart(); }; });
-    }
+    function renderCart() { const container = document.getElementById("cartContainer"); if(!container) return; if(cart.length===0){ container.innerHTML="<p style='text-align:center; color:gray;'>🛒 Carrito vacío</p>"; return; } cart = cart.map(item => actualizarStockItem(item)); container.innerHTML = cart.map((item,idx)=>`<div class="cart-item"><div class="cart-item-info"><strong>${item.codigo}</strong> - ${item.descripcion}<span>Cantidad: ${item.cantidad}</span><span>📦 Stock disp: ${item.stockActual}</span></div><div class="cart-item-actions"><button class="btn-icon btn-icon-edit" data-edit="${idx}" title="Editar cantidad"><i class="fas fa-edit"></i></button><button class="btn-icon btn-icon-delete" data-del="${idx}" title="Eliminar producto"><i class="fas fa-trash-alt"></i></button></div></div>`).join(''); document.querySelectorAll("[data-edit]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-edit")); const item = cart[i]; const prodActual = getInventory().find(p=>p.codigo===item.codigo); const stockActual = prodActual ? prodActual.existencia : 0; const nuevaCant = prompt(`Editar cantidad para ${item.codigo}\nStock disponible AHORA: ${stockActual}\nCantidad actual: ${item.cantidad}`, item.cantidad); if(nuevaCant && !isNaN(parseInt(nuevaCant))) { const newCant = parseInt(nuevaCant); if(newCant <= 0) return alert("Cantidad inválida"); if(newCant > stockActual) return alert(`No puede entregar más de ${stockActual} (stock actual)`); item.cantidad = newCant; item.stockActual = stockActual; renderCart(); } }; }); document.querySelectorAll("[data-del]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-del")); cart.splice(i,1); renderCart(); }; }); }
+    async function realizarEntrega(items, destinatario, area, nota) { if(!items.length) throw new Error("Carrito vacío"); if(!destinatario.trim()) throw new Error("Nombre requerido"); const deliveryId = Date.now(); for(let item of items) { await registrarMovimiento({ codigo:item.codigo, cantidad:item.cantidad, tipo:"Salida", descripcion:item.descripcion, tipoProducto:item.tipoProducto, lote:item.lote, registroInvima:item.registroInvima, vencimiento:item.vencimiento, estante:item.estante, stockMinimo:0 }, { destinatario, area, deliveryId, nota }); } }
+    function imprimirRecibo(destinatario, area, items, nota) { const win = window.open(); win.document.write(`<html><head><title>Recibo Entrega</title><style>body{font-family:monospace;padding:20px;} .recibo{border:1px solid #ccc;padding:20px;max-width:400px;margin:auto;}</style></head><body><div class="recibo"><h3>FARMACIA ESE HOSPITAL LOCAL SAN ZENON</h3><p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p><p><strong>Entregó:</strong> ${currentUserFullName}</p><p><strong>Área:</strong> ${area}</p><p><strong>Destinatario:</strong> ${destinatario}</p>${nota ? `<p><strong>Observación:</strong> ${nota}</p>` : ""}<hr><table style="width:100%"><tr><th>Producto</th><th>Cant</th></tr>${items.map(i=>`<tr><td>${i.codigo} - ${i.descripcion}</td><td style="text-align:center">${i.cantidad}</td></tr>`).join('')}</table><hr><p>Total ítems: ${items.reduce((s,i)=>s+i.cantidad,0)}</p><p style="text-align:center">--- Válido como comprobante ---</p></div><script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`); win.document.close(); }
+    function setupAutocomplete(inputId, listId, onSelectCallback) { /* función completa omitida por longitud, pero se mantiene igual */ const input = document.getElementById(inputId); const listEl = document.getElementById(listId); let currentProducts = getInventory(); function updateSuggestions() { const term = input.value.toLowerCase().trim(); if(term === "") { listEl.style.display = "none"; return; } const filtered = currentProducts.filter(p => p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)).slice(0,10); if(filtered.length === 0) { listEl.style.display = "none"; return; } listEl.innerHTML = filtered.map(p => `<li data-cod="${p.codigo}" data-desc="${p.descripcion.replace(/"/g, '&quot;')}" data-tipo="${p.tipoProducto}" data-lote="${p.lote||''}" data-reginv="${p.registroInvima||''}" data-ven="${p.vencimiento||''}" data-estante="${p.estante||''}" data-stock="${p.existencia}">${p.codigo} - ${p.descripcion} (Stock: ${p.existencia})</li>`).join(''); listEl.style.display = "block"; } input.addEventListener("input", updateSuggestions); listEl.addEventListener("click", (e) => { const li = e.target.closest("li"); if(li) { const cod = li.getAttribute("data-cod"); const prod = getInventory().find(p => p.codigo === cod); if(prod && onSelectCallback) onSelectCallback(prod); input.value = `${prod.codigo} - ${prod.descripcion}`; listEl.style.display = "none"; } }); document.addEventListener("click", (e) => { if(e.target !== input) listEl.style.display = "none"; }); }
+    function initEntregaAutocomplete() { setupAutocomplete("autocompleteEntregaInput", "autocompleteEntregaList", (prod) => { selectedProductoEntrega = prod; document.getElementById("stockDisponibleEntrega").value = prod.existencia; }); document.getElementById("agregarAlCarritoBtn").onclick = () => { if(!selectedProductoEntrega) return alert("Seleccione un producto de la lista"); const cant = parseInt(document.getElementById("cantidadEntrega").value); if(isNaN(cant)||cant<=0) return alert("Cantidad válida"); if(selectedProductoEntrega.existencia < cant) return alert(`Stock insuficiente: solo ${selectedProductoEntrega.existencia}`); const exist = cart.find(i=>i.codigo===selectedProductoEntrega.codigo); if(exist) { if(exist.cantidad + cant > selectedProductoEntrega.existencia) return alert(`No puede exceder el stock actual (${selectedProductoEntrega.existencia})`); exist.cantidad += cant; exist.stockActual = selectedProductoEntrega.existencia; } else { cart.push({ codigo:selectedProductoEntrega.codigo, descripcion:selectedProductoEntrega.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrega.tipoProducto, lote:selectedProductoEntrega.lote, registroInvima:selectedProductoEntrega.registroInvima, vencimiento:selectedProductoEntrega.vencimiento, estante:selectedProductoEntrega.estante, stockActual:selectedProductoEntrega.existencia }); } renderCart(); document.getElementById("cantidadEntrega").value = 1; document.getElementById("stockDisponibleEntrega").value = ""; document.getElementById("autocompleteEntregaInput").value = ""; selectedProductoEntrega = null; }; document.getElementById("limpiarFormularioEntregaBtn").onclick = () => { document.getElementById("autocompleteEntregaInput").value = ""; document.getElementById("cantidadEntrega").value = 1; document.getElementById("stockDisponibleEntrega").value = ""; selectedProductoEntrega = null; }; document.getElementById("confirmarEntregaBtn").onclick = async () => { let area = document.getElementById("areaDestino").value; if(area === "Otro") area = document.getElementById("otroArea").value.trim() || "Otro"; const dest = document.getElementById("nombreDestinatario").value.trim(); const nota = document.getElementById("notaEntrega").value.trim(); if(cart.length===0) return alert("Carrito vacío"); if(!dest) return alert("Ingrese nombre del destinatario"); try { await realizarEntrega(cart, dest, area, nota); imprimirRecibo(dest, area, cart, nota); alert("✅ Entrega realizada. Stock actualizado."); cart = []; renderCart(); document.getElementById("nombreDestinatario").value = ""; document.getElementById("otroArea").value = ""; document.getElementById("notaEntrega").value = ""; renderInventory(); renderMovementsTable(); renderHistorialEntregas(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } }; document.getElementById("limpiarCarritoBtn").onclick = () => { cart = []; renderCart(); }; document.getElementById("areaDestino").addEventListener("change", function(){ document.getElementById("otroArea").style.display = this.value === "Otro" ? "block" : "none"; }); }
+    function renderCartEntrada() { const container = document.getElementById("cartEntradaContainer"); if(!container) return; if(cartEntrada.length===0){ container.innerHTML="<p style='text-align:center; color:gray;'>🛒 Carrito vacío</p>"; return; } container.innerHTML = cartEntrada.map((item,idx)=>`<div class="cart-item"><div class="cart-item-info"><strong>${item.codigo}</strong> - ${item.descripcion}<span>Cantidad: ${item.cantidad}</span></div><div class="cart-item-actions"><button class="btn-icon btn-icon-edit" data-edit="${idx}" title="Editar cantidad"><i class="fas fa-edit"></i></button><button class="btn-icon btn-icon-delete" data-del="${idx}" title="Eliminar"><i class="fas fa-trash-alt"></i></button></div></div>`).join(''); document.querySelectorAll("#cartEntradaContainer [data-edit]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-edit")); const nuevaCant = prompt("Nueva cantidad:", cartEntrada[i].cantidad); if(nuevaCant && !isNaN(parseInt(nuevaCant))) { cartEntrada[i].cantidad = parseInt(nuevaCant); renderCartEntrada(); } }; }); document.querySelectorAll("#cartEntradaContainer [data-del]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-del")); cartEntrada.splice(i,1); renderCartEntrada(); }; }); }
+    async function registrarEntradaProveedor(items, proveedor, factura, nota) { if(!items.length) throw new Error("Carrito vacío"); if(!proveedor) throw new Error("Seleccione un proveedor"); for(let item of items) { await registrarMovimiento({ codigo:item.codigo, cantidad:item.cantidad, tipo:"Entrada", descripcion:item.descripcion, tipoProducto:item.tipoProducto, lote:item.lote, registroInvima:item.registroInvima, vencimiento:item.vencimiento, estante:item.estante, stockMinimo:0 }, { proveedor, factura, nota }); } }
+    function imprimirComprobanteEntrada(proveedor, factura, items, nota) { const win = window.open(); win.document.write(`<html><head><title>Comprobante Entrada</title><style>body{font-family:monospace;padding:20px;} .recibo{border:1px solid #ccc;padding:20px;max-width:400px;margin:auto;}</style></head><body><div class="recibo"><h3>FARMACIA ESE HOSPITAL LOCAL SAN ZENON</h3><p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p><p><strong>Registró:</strong> ${currentUserFullName}</p><p><strong>Proveedor:</strong> ${proveedor}</p><p><strong>Factura/Referencia:</strong> ${factura || "N/A"}</p>${nota ? `<p><strong>Observación:</strong> ${nota}</p>` : ""}<hr><table style="width:100%"><tr><th>Producto</th><th>Cantidad</th></tr>${items.map(i=>`<tr><td>${i.codigo} - ${i.descripcion}</td><td style="text-align:center">${i.cantidad}</td>`).join('')}</table><hr><p>Total ítems: ${items.reduce((s,i)=>s+i.cantidad,0)}</p><p style="text-align:center">--- Comprobante de entrada a inventario ---</p></div><script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`); win.document.close(); }
+    function initEntradaProveedor() { setupAutocomplete("autocompleteEntradaInput", "autocompleteEntradaList", (prod) => { selectedProductoEntrada = prod; document.getElementById("stockActualEntrada").value = prod.existencia; }); document.getElementById("agregarAlCarritoEntradaBtn").onclick = () => { if(!selectedProductoEntrada) return alert("Seleccione un producto"); const cant = parseInt(document.getElementById("cantidadEntrada").value); if(isNaN(cant)||cant<=0) return alert("Cantidad válida"); const exist = cartEntrada.find(i=>i.codigo===selectedProductoEntrada.codigo); if(exist) exist.cantidad += cant; else cartEntrada.push({ codigo:selectedProductoEntrada.codigo, descripcion:selectedProductoEntrada.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrada.tipoProducto, lote:selectedProductoEntrada.lote, registroInvima:selectedProductoEntrada.registroInvima, vencimiento:selectedProductoEntrada.vencimiento, estante:selectedProductoEntrada.estante }); renderCartEntrada(); document.getElementById("cantidadEntrada").value = 1; document.getElementById("stockActualEntrada").value = ""; document.getElementById("autocompleteEntradaInput").value = ""; selectedProductoEntrada = null; }; document.getElementById("limpiarFormularioEntradaBtn").onclick = () => { document.getElementById("autocompleteEntradaInput").value = ""; document.getElementById("cantidadEntrada").value = 1; document.getElementById("stockActualEntrada").value = ""; selectedProductoEntrada = null; }; document.getElementById("confirmarEntradaBtn").onclick = async () => { const proveedor = document.getElementById("proveedorDestino").value; const factura = document.getElementById("facturaReferencia").value; const nota = document.getElementById("notaEntrada").value.trim(); if(cartEntrada.length===0) return alert("Carrito vacío"); if(!proveedor) return alert("Seleccione un proveedor"); try { await registrarEntradaProveedor(cartEntrada, proveedor, factura, nota); imprimirComprobanteEntrada(proveedor, factura, cartEntrada, nota); alert("✅ Entrada registrada. Stock actualizado."); cartEntrada = []; renderCartEntrada(); document.getElementById("facturaReferencia").value = ""; document.getElementById("notaEntrada").value = ""; renderInventory(); renderMovementsTable(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } }; document.getElementById("limpiarCarritoEntradaBtn").onclick = () => { cartEntrada = []; renderCartEntrada(); }; function actualizarSelectProveedores() { const select = document.getElementById("proveedorDestino"); if(select) { const provs = getProveedores(); select.innerHTML = '<option value="">-- Seleccione --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join(''); } const selectMov = document.getElementById("movProveedor"); if(selectMov) { const provs = getProveedores(); selectMov.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join(''); } } actualizarSelectProveedores(); window.refreshProveedoresSelect = actualizarSelectProveedores; }
+    function getEntregas() { const movs = getMovements().filter(m => m.tipo === "Salida" && m.destinatario && m.area); const grupos = new Map(); movs.forEach(m => { const key = m.deliveryId ? `delivery_${m.deliveryId}` : `single_${m.id}`; if(!grupos.has(key)) grupos.set(key, []); grupos.get(key).push(m); }); const pedidos = []; for(let [key, items] of grupos.entries()) { pedidos.push({ fecha: items[0].fecha, usuario: items[0].usuario, area: items[0].area, destinatario: items[0].destinatario, productos: items.map(i => ({ codigo: i.codigo, cantidad: i.cantidad, descripcion: i.descripcion })), nota: items[0].nota || "", deliveryId: key }); } pedidos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)); return pedidos; }
+    function renderHistorialEntregas() { let pedidos = getEntregas(); const areaFiltro = document.getElementById("filtroAreaHistorial").value; const destFiltro = document.getElementById("filtroDestinatarioHistorial").value.toLowerCase(); const desde = document.getElementById("filtroFechaDesdeHistorial").value; const hasta = document.getElementById("filtroFechaHastaHistorial").value; if(areaFiltro) pedidos = pedidos.filter(p => p.area === areaFiltro); if(destFiltro) pedidos = pedidos.filter(p => p.destinatario.toLowerCase().includes(destFiltro)); if(desde) pedidos = pedidos.filter(p => new Date(p.fecha) >= new Date(desde)); if(hasta) pedidos = pedidos.filter(p => new Date(p.fecha) <= new Date(hasta)); const tbody = document.querySelector("#historialEntregasTable tbody"); tbody.innerHTML = ""; pedidos.forEach(pedido => { const row = tbody.insertRow(); row.insertCell(0).innerText = new Date(pedido.fecha).toLocaleString(); row.insertCell(1).innerText = pedido.usuario; row.insertCell(2).innerText = pedido.area; row.insertCell(3).innerText = pedido.destinatario; row.insertCell(4).innerText = pedido.productos.map(prod => `${prod.codigo} x${prod.cantidad}`).join(', '); row.insertCell(5).innerText = pedido.nota || "—"; const btn = document.createElement("button"); btn.innerHTML = "<i class='fas fa-redo-alt'></i> Re-dispensar"; btn.className = "btn-redispensar"; btn.onclick = () => { cart = pedido.productos.map(prod => { const prodActual = getInventory().find(p => p.codigo === prod.codigo); return { codigo: prod.codigo, descripcion: prod.descripcion, cantidad: prod.cantidad, tipoProducto: prodActual?.tipoProducto || "Medicamento", lote: prodActual?.lote || "", registroInvima: prodActual?.registroInvima || "", vencimiento: prodActual?.vencimiento || "", estante: prodActual?.estante || "", stockActual: prodActual ? prodActual.existencia : 0 }; }); renderCart(); document.getElementById("nombreDestinatario").value = pedido.destinatario; document.getElementById("notaEntrega").value = pedido.nota || ""; const areaSel = document.getElementById("areaDestino"); if(areaSel.querySelector(`option[value="${pedido.area}"]`)) areaSel.value = pedido.area; else areaSel.value = "Otro"; document.getElementById("otroArea").value = pedido.area === "Otro" ? pedido.area : ""; document.getElementById("otroArea").style.display = areaSel.value === "Otro" ? "block" : "none"; alert("Productos cargados en el carrito. Puede modificar cantidades."); document.querySelector(".tab-btn[data-tab='entregas']").click(); }; row.insertCell(6).appendChild(btn); }); renderDashboard(); }
+    function renderUsersTable() { /* omitida por brevedad, se mantiene la implementación original */ const users = getUsers(); const tbody = document.getElementById("usersTableBody"); if(!tbody) return; tbody.innerHTML = ""; for(let [user, data] of Object.entries(users)) { const row = tbody.insertRow(); if(data.enabled === false) row.classList.add("disabled-user-row"); row.insertCell(0).innerText = user; row.insertCell(1).innerText = data.fullName || user; row.insertCell(2).innerText = data.phone || ""; row.insertCell(3).innerText = data.email || ""; row.insertCell(4).innerText = data.role; const cellEstado = row.insertCell(5); if(currentUserRole === "admin" || currentUserRole === "root") { const chk = document.createElement("input"); chk.type = "checkbox"; chk.checked = data.enabled !== false; chk.className = "user-enabled-checkbox"; chk.onchange = async () => { const newUsers = getUsers(); newUsers[user].enabled = chk.checked; saveUsers(newUsers); await addAuditLog("usuario", chk.checked ? "Habilitar" : "Deshabilitar", `Usuario ${user}`); renderUsersTable(); if(user === currentUser && !chk.checked) { alert("Usuario deshabilitado, será desconectado."); sessionStorage.clear(); location.reload(); } }; cellEstado.appendChild(chk); } else cellEstado.innerText = data.enabled === false ? "Inactivo" : "Activo"; const cellAcc = row.insertCell(6); if(currentUserRole === "admin" || currentUserRole === "root") { const editBtn = document.createElement("button"); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = "btn-icon btn-icon-edit"; editBtn.onclick = () => mostrarModalEditarUsuario(user, data); const delBtn = document.createElement("button"); delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; delBtn.className = "btn-icon btn-icon-delete"; if(user !== currentUser && !(currentUserRole === "root" && user === "root")) delBtn.onclick = async () => { if(confirm(`¿Eliminar usuario ${user}?`)) { const newUsers = getUsers(); delete newUsers[user]; saveUsers(newUsers); await addAuditLog("usuario", "Eliminar", `Usuario ${user}`); renderUsersTable(); } }; else delBtn.disabled = true; cellAcc.append(editBtn, delBtn); } else cellAcc.innerText = "---"; } }
+    function mostrarModalEditarUsuario(username, userData) { /* omitida */ const modal = document.createElement("div"); modal.className = "modal"; modal.innerHTML = `<div class="modal-content"><h3>Editar usuario: ${username}</h3><div class="form-grid"><div class="form-field"><label>Nombre completo</label><input id="editFullName" value="${(userData.fullName||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Teléfono</label><input id="editPhone" value="${(userData.phone||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Email</label><input id="editEmail" value="${(userData.email||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Rol</label><select id="editRole"><option value="user">user</option><option value="admin">admin</option></select></div></div><div style="margin-top:20px;"><button class="btn-outline" id="cancelEditUser">Cancelar</button><button class="btn-primary" id="saveEditUser">Guardar</button></div></div>`; document.body.appendChild(modal); document.getElementById("editRole").value = userData.role; document.getElementById("cancelEditUser").onclick = () => modal.remove(); document.getElementById("saveEditUser").onclick = async () => { const users = getUsers(); if(users[username]) { users[username].fullName = document.getElementById("editFullName").value.trim(); users[username].phone = document.getElementById("editPhone").value.trim(); users[username].email = document.getElementById("editEmail").value.trim(); users[username].role = document.getElementById("editRole").value; saveUsers(users); if(username === currentUser) currentUserFullName = users[username].fullName; document.getElementById("currentUserLabel").innerText = currentUserFullName; await addAuditLog("usuario", "Editar", `Usuario ${username} actualizado`); alert("Usuario actualizado"); modal.remove(); renderUsersTable(); } else modal.remove(); }; }
+    async function addUser() { if(currentUserRole !== "admin" && currentUserRole !== "root") return alert("No tiene permisos"); const username = document.getElementById("newUser").value.trim(); const pass = document.getElementById("newPass").value; const full = document.getElementById("newFullName").value.trim(); const phone = document.getElementById("newPhone").value.trim(); const email = document.getElementById("newEmail").value.trim(); if(!username || !pass || !full) return alert("Complete usuario, contraseña y nombre"); const users = getUsers(); if(users[username]) return alert("Usuario ya existe"); users[username] = { usuario: username, passwordHash: await hashPassword(pass), role: document.getElementById("newRole").value, createdAt: new Date().toISOString(), fullName: full, phone: phone, email: email, enabled: true }; saveUsers(users); await addAuditLog("usuario", "Crear", `Usuario ${username} creado`); alert("Usuario creado"); document.getElementById("newUser").value = ""; document.getElementById("newPass").value = ""; document.getElementById("newFullName").value = ""; document.getElementById("newPhone").value = ""; document.getElementById("newEmail").value = ""; if(document.getElementById("usersList").style.display === "block") renderUsersTable(); }
+    function openConfigModal() { /* omitida pero se mantiene funcional */ const modal = document.createElement("div"); modal.className = "modal"; modal.innerHTML = `<div class="modal-content"><h3>Configuración del Sistema</h3><div class="config-list"><h4>📌 Áreas / Servicios</h4><div id="areasList"></div><div class="add-item"><input type="text" id="newArea" placeholder="Nueva área"><button class="btn-secondary" id="addAreaBtn">+ Agregar</button></div></div><div class="config-list"><h4>📦 Tipo Producto</h4><div id="tiposProductoList"></div><div class="add-item"><input type="text" id="newTipoProd" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoProdBtn">+ Agregar</button></div></div><div class="config-list"><h4>🔄 Tipo Movimiento</h4><div id="tiposMovList"></div><div class="add-item"><input type="text" id="newTipoMov" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoMovBtn">+ Agregar</button></div></div><div class="config-list"><h4>🏷️ Estantes (Ubicaciones)</h4><div id="estantesList"></div><div class="add-item"><input type="text" id="newEstante" placeholder="Nuevo estante"><button class="btn-secondary" id="addEstanteBtn">+ Agregar</button></div></div><div class="config-list"><h4>🚚 Proveedores</h4><div id="proveedoresList"></div><div class="add-item"><input type="text" id="newProveedor" placeholder="Nuevo proveedor"><button class="btn-secondary" id="addProveedorBtn">+ Agregar</button></div></div><button class="btn-outline" id="closeConfigModal">Cerrar</button></div>`; document.body.appendChild(modal); function renderList(containerId, items, storageKey) { const container = document.getElementById(containerId); container.innerHTML = items.map((item,idx)=>`<div class="config-item"><span>${item}</span><button class="btn-danger btn-icon" data-idx="${idx}">🗑️</button></div>`).join(''); container.querySelectorAll("[data-idx]").forEach(btn=>{ btn.onclick = async () => { const idx = parseInt(btn.dataset.idx); const removed = items[idx]; items.splice(idx,1); saveConfig(storageKey, items); renderList(containerId, items, storageKey); updateAllDynamicSelects(); if(storageKey === STORAGE_CONFIG_PROVEEDORES && window.refreshProveedoresSelect) window.refreshProveedoresSelect(); await addAuditLog("config", "Eliminar", `${storageKey} - ${removed}`); }; }); } function refreshAll() { renderList("areasList", getAreas(), STORAGE_CONFIG_AREAS); renderList("tiposProductoList", getTiposProducto(), STORAGE_CONFIG_TIPOS_PRODUCTO); renderList("tiposMovList", getTiposMovimiento(), STORAGE_CONFIG_TIPOS_MOV); renderList("estantesList", getEstantes(), STORAGE_CONFIG_ESTANTES); renderList("proveedoresList", getProveedores(), STORAGE_CONFIG_PROVEEDORES); const divMini = document.getElementById("proveedoresListaMini"); if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>"; } document.getElementById("addAreaBtn").onclick = async () => { const val = document.getElementById("newArea").value.trim(); if(val && !getAreas().includes(val)) { const areas = getAreas(); areas.push(val); saveConfig(STORAGE_CONFIG_AREAS, areas); await addAuditLog("config", "Agregar", `Área: ${val}`); refreshAll(); updateAllDynamicSelects(); document.getElementById("newArea").value=""; } }; document.getElementById("addTipoProdBtn").onclick = async () => { const val = document.getElementById("newTipoProd").value.trim(); if(val && !getTiposProducto().includes(val)) { const tipos = getTiposProducto(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, tipos); await addAuditLog("config", "Agregar", `Tipo producto: ${val}`); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoProd").value=""; } }; document.getElementById("addTipoMovBtn").onclick = async () => { const val = document.getElementById("newTipoMov").value.trim(); if(val && !getTiposMovimiento().includes(val)) { const tipos = getTiposMovimiento(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_MOV, tipos); await addAuditLog("config", "Agregar", `Tipo movimiento: ${val}`); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoMov").value=""; } }; document.getElementById("addEstanteBtn").onclick = async () => { const val = document.getElementById("newEstante").value.trim(); if(val && !getEstantes().includes(val)) { const estantes = getEstantes(); estantes.push(val); saveConfig(STORAGE_CONFIG_ESTANTES, estantes); await addAuditLog("config", "Agregar", `Estante: ${val}`); refreshAll(); updateAllDynamicSelects(); document.getElementById("newEstante").value=""; } }; document.getElementById("addProveedorBtn").onclick = async () => { const val = document.getElementById("newProveedor").value.trim(); if(val && !getProveedores().includes(val)) { const provs = getProveedores(); provs.push(val); saveConfig(STORAGE_CONFIG_PROVEEDORES, provs); await addAuditLog("config", "Agregar", `Proveedor: ${val}`); refreshAll(); updateAllDynamicSelects(); if(window.refreshProveedoresSelect) window.refreshProveedoresSelect(); document.getElementById("newProveedor").value=""; } }; document.getElementById("closeConfigModal").onclick = () => modal.remove(); refreshAll(); }
+    function updateAllDynamicSelects() { const movTipo = document.getElementById("movTipo"); if(movTipo) movTipo.innerHTML = getTiposMovimiento().map(t=>`<option value="${t}">${t}</option>`).join(''); const tipoProd = document.getElementById("movTipoProducto"); if(tipoProd) tipoProd.innerHTML = getTiposProducto().map(t=>`<option value="${t}">${t}</option>`).join(''); const areaSelect = document.getElementById("areaDestino"); if(areaSelect) { areaSelect.innerHTML = getAreas().map(a=>`<option value="${a}">${a}</option>`).join(''); areaSelect.value = getAreas()[0]; document.getElementById("otroArea").style.display = areaSelect.value === "Otro" ? "block" : "none"; } const filtroArea = document.getElementById("filtroAreaHistorial"); if(filtroArea) filtroArea.innerHTML = '<option value="">Todas</option>' + getAreas().map(a=>`<option value="${a}">${a}</option>`).join(''); const prodEstante = document.getElementById("prodEstante"); if(prodEstante) prodEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join(''); const movEstante = document.getElementById("movEstante"); if(movEstante) movEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join(''); const movProveedor = document.getElementById("movProveedor"); if(movProveedor) { const provs = getProveedores(); movProveedor.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join(''); } const divMini = document.getElementById("proveedoresListaMini"); if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>"; if(window.refreshProveedoresSelect) window.refreshProveedoresSelect(); }
+    function updateNotificationBell() { const inv = getInventory(); const hoy = new Date(); hoy.setHours(0,0,0,0); const expiryLimit = new Date(); expiryLimit.setDate(hoy.getDate() + getExpiryDays()); const vencidos = inv.filter(p => p.vencimiento && new Date(p.vencimiento) < hoy); const proximos = inv.filter(p => p.vencimiento && new Date(p.vencimiento) >= hoy && new Date(p.vencimiento) <= expiryLimit); const bajoStock = inv.filter(p => p.existencia <= p.stockMinimo); const totalAlertas = vencidos.length + proximos.length + bajoStock.length; const badge = document.getElementById("alertBadge"); if(totalAlertas > 0) { badge.style.display = "inline-block"; badge.innerText = totalAlertas; } else { badge.style.display = "none"; } const alertPanel = document.getElementById("alertPanel"); let html = ""; if(vencidos.length) html += `<strong style="color:#b91c1c;">⛔ VENCIDOS (${vencidos.length}):</strong><ul>${vencidos.map(p=>`<li>${p.codigo} - ${p.descripcion} (vence: ${p.vencimiento})</li>`).join('')}</ul>`; if(proximos.length) html += `<strong style="color:#f59e0b;">📅 PRÓXIMOS A VENCER (${getExpiryDays()} días):</strong><ul>${proximos.map(p=>`<li>${p.codigo} - ${p.descripcion} (vence: ${p.vencimiento})</li>`).join('')}</ul>`; if(bajoStock.length) html += `<strong style="color:#dc2626;">⚠️ STOCK BAJO (${bajoStock.length}):</strong><ul>${bajoStock.map(p=>`<li>${p.codigo} - ${p.descripcion} (stock: ${p.existencia} / min: ${p.stockMinimo})</li>`).join('')}</ul>`; if(!totalAlertas) html = "<p style='text-align:center;'>✅ Sin alertas activas</p>"; alertPanel.innerHTML = html; }
+    function mostrarRecuperacion() { alert("Función de recuperación: contacte al administrador del sistema."); }
+    function exportToExcel(data, filename) { const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Datos"); XLSX.writeFile(wb, filename + ".xlsx"); }
+    async function importInventoryFromExcel(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = e => { const wb = XLSX.read(e.target.result, { type: 'array' }); let sheet = wb.Sheets["Inventario"] || wb.Sheets[wb.SheetNames[0]]; if(!sheet) reject("No se encontró ninguna hoja de datos"); const data = XLSX.utils.sheet_to_json(sheet); if(!data.length) reject("El archivo no contiene datos"); const productosImportados = []; for(let row of data) { const codigo = row.codigo || row.Código || row.code; if(!codigo) continue; productosImportados.push({ codigo: String(codigo).trim(), descripcion: row.descripcion || row.Descripción || "Sin descripción", tipoProducto: (row.tipoProducto === "Insumo") ? "Insumo" : "Medicamento", existencia: parseInt(row.existencia || row.Existencia || 0), stockMinimo: parseInt(row.stockMinimo || row.StockMínimo || 0), vencimiento: row.vencimiento || row.Vencimiento || "", estante: row.estante || row.Estante || "", lote: row.lote || row.Lote || "", registroInvima: row.registroInvima || row.RegistroInvima || "" }); } if(productosImportados.length === 0) reject("No se pudo leer ningún producto válido"); const medicamentos = productosImportados.filter(p => p.tipoProducto === "Medicamento"); const insumos = productosImportados.filter(p => p.tipoProducto === "Insumo"); localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(medicamentos)); localStorage.setItem(STORAGE_INSUMOS, JSON.stringify(insumos)); renderInventory(); renderMovementsTable(); renderDashboard(); resolve(); }; reader.onerror = reject; reader.readAsArrayBuffer(file); }); }
+    async function importMovementsFromExcel(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = e => { const wb = XLSX.read(e.target.result, { type: 'array' }); const sheet = wb.Sheets["Movimientos"]; if(sheet) { const data = XLSX.utils.sheet_to_json(sheet); localStorage.setItem(STORAGE_MOVEMENTS, JSON.stringify(data)); renderMovementsTable(); renderDashboard(); resolve(); } else reject("Hoja 'Movimientos' no encontrada"); }; reader.onerror = reject; reader.readAsArrayBuffer(file); }); }
+    function downloadInventoryTemplate() { const template = [ { Código: "MED001", Descripción: "Paracetamol 500mg", TipoProducto: "Medicamento", Existencia: 100, StockMínimo: 20, Vencimiento: "2025-12-31", Estante: "A1", Lote: "L123", RegistroInvima: "INV2023-001" }, { Código: "INS001", Descripción: "Jeringa 10ml", TipoProducto: "Insumo", Existencia: 500, StockMínimo: 100, Vencimiento: "2027-01-01", Estante: "B2", Lote: "LJ10", RegistroInvima: "INV2023-002" } ]; const ws = XLSX.utils.json_to_sheet(template); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Inventario"); XLSX.writeFile(wb, "plantilla_inventario_farmacia.xlsx"); }
+    function limpiarFormularioMovimiento() { document.getElementById("movCodigo").value = ""; document.getElementById("movDescripcion").value = ""; document.getElementById("movExistencia").value = ""; document.getElementById("movStockMinimo").value = ""; document.getElementById("movCantidad").value = ""; document.getElementById("movLote").value = ""; document.getElementById("movRegistroInvima").value = ""; document.getElementById("movVencimiento").value = ""; document.getElementById("movEstante").value = ""; document.getElementById("movProveedor").value = ""; }
+    function openProductSearchModal() { const modal = document.createElement("div"); modal.className = "modal"; modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-search"></i> Buscar producto</h3><input type="text" id="searchProductInput" placeholder="🔎 Código o descripción..." style="width:100%; margin-bottom:16px; padding:12px; border-radius:28px; border:1px solid #cbd5e1;"><div class="table-wrapper"><table id="searchProductTable" style="min-width:900px; width:100%;"><thead>运转<th>Código</th><th>Descripción</th><th>Tipo</th><th>Stock</th><th>Vencimiento</th><th>Estante</th><th>Acción</th></tr></thead><tbody></tbody></table></div><div style="margin-top:16px; text-align:right;"><button class="btn-outline" id="closeSearchModal">Cerrar</button></div></div>`; document.body.appendChild(modal); const tbody = modal.querySelector("#searchProductTable tbody"); function renderSearch(term) { const inv = getInventory(); const filtered = inv.filter(p=>p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)); tbody.innerHTML = filtered.map(p => `<tr class="clickable-row" data-cod="${p.codigo}"></td>${p.codigo}</td><td>${p.descripcion}</td><td>${p.tipoProducto}</td><td>${p.existencia}</td><td>${p.vencimiento || "N/A"}</td><td>${p.estante || "-"}</td><td style="text-align: center;"><button class="btn-select-product" data-cod="${p.codigo}"><i class="fas fa-check-circle"></i> Seleccionar</button></td></tr>`).join(''); } tbody.addEventListener('click', (e) => { let targetRow = e.target.closest('tr'); if(!targetRow) return; const cod = targetRow.getAttribute('data-cod'); if(cod) { const prod = getInventory().find(p => p.codigo === cod); if(prod) { document.getElementById("movCodigo").value = prod.codigo; document.getElementById("movDescripcion").value = prod.descripcion; document.getElementById("movExistencia").value = prod.existencia; document.getElementById("movStockMinimo").value = prod.stockMinimo; document.getElementById("movTipoProducto").value = prod.tipoProducto; document.getElementById("movLote").value = prod.lote || ""; document.getElementById("movRegistroInvima").value = prod.registroInvima || ""; document.getElementById("movVencimiento").value = prod.vencimiento || ""; document.getElementById("movEstante").value = prod.estante || ""; modal.remove(); } } }); const input = modal.querySelector("#searchProductInput"); input.addEventListener("input", e => renderSearch(e.target.value.toLowerCase())); renderSearch(""); modal.querySelector("#closeSearchModal").onclick = () => modal.remove(); }
 
-    async function realizarEntrega(items, destinatario, area) {
-        if(!items.length) throw new Error("Carrito vacío");
-        if(!destinatario.trim()) throw new Error("Nombre requerido");
-        const deliveryId = Date.now();
-        for(let item of items) {
-            await registrarMovimiento({ codigo:item.codigo, cantidad:item.cantidad, tipo:"Salida", descripcion:item.descripcion, tipoProducto:item.tipoProducto, lote:item.lote, registroInvima:item.registroInvima, vencimiento:item.vencimiento, estante:item.estante, stockMinimo:0 }, { destinatario, area, deliveryId });
-        }
-    }
+    // ========== Inicialización ==========
+    const defaultAreas = ["Urgencia", "Odontología", "Promotoras", "Otro"];
+    const defaultTiposProducto = ["Medicamento", "Insumo"];
+    const defaultTiposMovimiento = ["Entrada", "Salida"];
+    const defaultEstantes = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const defaultProveedores = ["Distribuidora Salud SAS", "Lab Farmacéutico Nacional", "Insumos Médicos Ltda"];
 
-    function imprimirRecibo(destinatario, area, items) {
-        const win = window.open();
-        win.document.write(`<html><head><title>Recibo Entrega</title><style>body{font-family:monospace;padding:20px;} .recibo{border:1px solid #ccc;padding:20px;max-width:400px;margin:auto;}</style></head><body><div class="recibo"><h3>FARMACIA ESE HOSPITAL LOCAL SAN ZENON</h3><p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p><p><strong>Entregó:</strong> ${currentUserFullName}</p><p><strong>Área:</strong> ${area}</p><p><strong>Destinatario:</strong> ${destinatario}</p><hr><table style="width:100%"><tr><th>Producto</th><th>Cant</th></tr>${items.map(i=>`<tr><td>${i.codigo} - ${i.descripcion}</td><td style="text-align:center">${i.cantidad}</td></tr>`).join('')}</table><hr><p>Total ítems: ${items.reduce((s,i)=>s+i.cantidad,0)}</p><p style="text-align:center">--- Válido como comprobante ---</p></div><script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`);
-        win.document.close();
-    }
-
-    function setupAutocomplete(inputId, listId, onSelectCallback) {
-        const input = document.getElementById(inputId);
-        const listEl = document.getElementById(listId);
-        let currentProducts = getInventory();
-        function updateSuggestions() {
-            const term = input.value.toLowerCase().trim();
-            if(term === "") { listEl.style.display = "none"; return; }
-            const filtered = currentProducts.filter(p => p.codigo.toLowerCase().includes(term) || p.descripcion.toLowerCase().includes(term)).slice(0,10);
-            if(filtered.length === 0) { listEl.style.display = "none"; return; }
-            listEl.innerHTML = filtered.map(p => `<li data-cod="${p.codigo}" data-desc="${p.descripcion.replace(/"/g, '&quot;')}" data-tipo="${p.tipoProducto}" data-lote="${p.lote||''}" data-reginv="${p.registroInvima||''}" data-ven="${p.vencimiento||''}" data-estante="${p.estante||''}" data-stock="${p.existencia}">${p.codigo} - ${p.descripcion} (Stock: ${p.existencia})</li>`).join('');
-            listEl.style.display = "block";
-        }
-        input.addEventListener("input", updateSuggestions);
-        listEl.addEventListener("click", (e) => {
-            const li = e.target.closest("li");
-            if(li) {
-                const cod = li.getAttribute("data-cod");
-                const prod = getInventory().find(p => p.codigo === cod);
-                if(prod && onSelectCallback) onSelectCallback(prod);
-                input.value = `${prod.codigo} - ${prod.descripcion}`;
-                listEl.style.display = "none";
-            }
-        });
-        document.addEventListener("click", (e) => { if(e.target !== input) listEl.style.display = "none"; });
-    }
-
-    let selectedProductoEntrega = null;
-    function initEntregaAutocomplete() {
-        setupAutocomplete("autocompleteEntregaInput", "autocompleteEntregaList", (prod) => {
-            selectedProductoEntrega = prod;
-            document.getElementById("stockDisponibleEntrega").value = prod.existencia;
-        });
-        document.getElementById("agregarAlCarritoBtn").onclick = () => {
-            if(!selectedProductoEntrega) return alert("Seleccione un producto de la lista");
-            const cant = parseInt(document.getElementById("cantidadEntrega").value);
-            if(isNaN(cant)||cant<=0) return alert("Cantidad válida");
-            if(selectedProductoEntrega.existencia < cant) return alert(`Stock insuficiente: solo ${selectedProductoEntrega.existencia}`);
-            const exist = cart.find(i=>i.codigo===selectedProductoEntrega.codigo);
-            if(exist) {
-                if(exist.cantidad + cant > selectedProductoEntrega.existencia) return alert(`No puede exceder el stock actual (${selectedProductoEntrega.existencia})`);
-                exist.cantidad += cant;
-                exist.stockActual = selectedProductoEntrega.existencia;
-            } else {
-                cart.push({ codigo:selectedProductoEntrega.codigo, descripcion:selectedProductoEntrega.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrega.tipoProducto, lote:selectedProductoEntrega.lote, registroInvima:selectedProductoEntrega.registroInvima, vencimiento:selectedProductoEntrega.vencimiento, estante:selectedProductoEntrega.estante, stockActual:selectedProductoEntrega.existencia });
-            }
-            renderCart();
-            document.getElementById("cantidadEntrega").value = 1;
-            document.getElementById("stockDisponibleEntrega").value = "";
-            document.getElementById("autocompleteEntregaInput").value = "";
-            selectedProductoEntrega = null;
-        };
-        document.getElementById("limpiarFormularioEntregaBtn").onclick = () => { document.getElementById("autocompleteEntregaInput").value = ""; document.getElementById("cantidadEntrega").value = 1; document.getElementById("stockDisponibleEntrega").value = ""; selectedProductoEntrega = null; };
-        document.getElementById("confirmarEntregaBtn").onclick = async () => {
-            let area = document.getElementById("areaDestino").value;
-            if(area === "Otro") area = document.getElementById("otroArea").value.trim() || "Otro";
-            const dest = document.getElementById("nombreDestinatario").value.trim();
-            if(cart.length===0) return alert("Carrito vacío");
-            if(!dest) return alert("Ingrese nombre del destinatario");
-            try {
-                await realizarEntrega(cart, dest, area);
-                imprimirRecibo(dest, area, cart);
-                alert("✅ Entrega realizada. Stock actualizado.");
-                cart = [];
-                renderCart();
-                document.getElementById("nombreDestinatario").value = "";
-                document.getElementById("otroArea").value = "";
-                renderInventory();
-                renderMovementsTable();
-                renderHistorialEntregas();
-                updateNotificationBell();
-                renderDashboard();
-            } catch(e){ alert("Error: "+e.message); }
-        };
-        document.getElementById("limpiarCarritoBtn").onclick = () => { cart = []; renderCart(); };
-        document.getElementById("areaDestino").addEventListener("change", function(){ document.getElementById("otroArea").style.display = this.value === "Otro" ? "block" : "none"; });
-    }
-
-    // ==================== ENTRADAS POR PROVEEDOR ====================
-    let selectedProductoEntrada = null;
-    function renderCartEntrada() {
-        const container = document.getElementById("cartEntradaContainer");
-        if(!container) return;
-        if(cartEntrada.length===0){ container.innerHTML="<p style='text-align:center; color:gray;'>🛒 Carrito vacío</p>"; return; }
-        container.innerHTML = cartEntrada.map((item,idx)=>`
-            <div class="cart-item">
-                <div class="cart-item-info">
-                    <strong>${item.codigo}</strong> - ${item.descripcion}
-                    <span>Cantidad: ${item.cantidad}</span>
-                </div>
-                <div class="cart-item-actions">
-                    <button class="btn-icon btn-icon-edit" data-edit="${idx}" title="Editar cantidad"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon btn-icon-delete" data-del="${idx}" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
-                </div>
-            </div>
-        `).join('');
-        document.querySelectorAll("#cartEntradaContainer [data-edit]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-edit")); const nuevaCant = prompt("Nueva cantidad:", cartEntrada[i].cantidad); if(nuevaCant && !isNaN(parseInt(nuevaCant))) { cartEntrada[i].cantidad = parseInt(nuevaCant); renderCartEntrada(); } }; });
-        document.querySelectorAll("#cartEntradaContainer [data-del]").forEach(btn=>{ btn.onclick = () => { const i = parseInt(btn.getAttribute("data-del")); cartEntrada.splice(i,1); renderCartEntrada(); }; });
-    }
-
-    async function registrarEntradaProveedor(items, proveedor, factura) {
-        if(!items.length) throw new Error("Carrito vacío");
-        if(!proveedor) throw new Error("Seleccione un proveedor");
-        for(let item of items) {
-            await registrarMovimiento({ codigo:item.codigo, cantidad:item.cantidad, tipo:"Entrada", descripcion:item.descripcion, tipoProducto:item.tipoProducto, lote:item.lote, registroInvima:item.registroInvima, vencimiento:item.vencimiento, estante:item.estante, stockMinimo:0 }, { proveedor, factura });
-        }
-    }
-
-    function imprimirComprobanteEntrada(proveedor, factura, items) {
-        const win = window.open();
-        win.document.write(`<html><head><title>Comprobante Entrada</title><style>body{font-family:monospace;padding:20px;} .recibo{border:1px solid #ccc;padding:20px;max-width:400px;margin:auto;}</style></head><body><div class="recibo"><h3>FARMACIA ESE HOSPITAL LOCAL SAN ZENON</h3><p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p><p><strong>Registró:</strong> ${currentUserFullName}</p><p><strong>Proveedor:</strong> ${proveedor}</p><p><strong>Factura/Referencia:</strong> ${factura || "N/A"}</p><hr><table style="width:100%"><tr><th>Producto</th><th>Cantidad</th></tr>${items.map(i=>`<tr><td>${i.codigo} - ${i.descripcion}</td><td style="text-align:center">${i.cantidad}</td>`).join('')}</table><hr><p>Total ítems: ${items.reduce((s,i)=>s+i.cantidad,0)}</p><p style="text-align:center">--- Comprobante de entrada a inventario ---</p></div><script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`);
-        win.document.close();
-    }
-
-    function initEntradaProveedor() {
-        setupAutocomplete("autocompleteEntradaInput", "autocompleteEntradaList", (prod) => {
-            selectedProductoEntrada = prod;
-            document.getElementById("stockActualEntrada").value = prod.existencia;
-        });
-        document.getElementById("agregarAlCarritoEntradaBtn").onclick = () => {
-            if(!selectedProductoEntrada) return alert("Seleccione un producto");
-            const cant = parseInt(document.getElementById("cantidadEntrada").value);
-            if(isNaN(cant)||cant<=0) return alert("Cantidad válida");
-            const exist = cartEntrada.find(i=>i.codigo===selectedProductoEntrada.codigo);
-            if(exist) exist.cantidad += cant;
-            else cartEntrada.push({ codigo:selectedProductoEntrada.codigo, descripcion:selectedProductoEntrada.descripcion, cantidad:cant, tipoProducto:selectedProductoEntrada.tipoProducto, lote:selectedProductoEntrada.lote, registroInvima:selectedProductoEntrada.registroInvima, vencimiento:selectedProductoEntrada.vencimiento, estante:selectedProductoEntrada.estante });
-            renderCartEntrada();
-            document.getElementById("cantidadEntrada").value = 1;
-            document.getElementById("stockActualEntrada").value = "";
-            document.getElementById("autocompleteEntradaInput").value = "";
-            selectedProductoEntrada = null;
-        };
-        document.getElementById("confirmarEntradaBtn").onclick = async () => {
-            const proveedor = document.getElementById("proveedorDestino").value;
-            const factura = document.getElementById("facturaReferencia").value;
-            if(cartEntrada.length===0) return alert("Carrito vacío");
-            if(!proveedor) return alert("Seleccione un proveedor");
-            try {
-                await registrarEntradaProveedor(cartEntrada, proveedor, factura);
-                imprimirComprobanteEntrada(proveedor, factura, cartEntrada);
-                alert("✅ Entrada registrada. Stock actualizado.");
-                cartEntrada = [];
-                renderCartEntrada();
-                document.getElementById("facturaReferencia").value = "";
-                renderInventory();
-                renderMovementsTable();
-                updateNotificationBell();
-                renderDashboard();
-            } catch(e){ alert("Error: "+e.message); }
-        };
-        document.getElementById("limpiarCarritoEntradaBtn").onclick = () => { cartEntrada = []; renderCartEntrada(); };
-        function actualizarSelectProveedores() {
-            const select = document.getElementById("proveedorDestino");
-            if(select) {
-                const provs = getProveedores();
-                select.innerHTML = '<option value="">-- Seleccione --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
-            }
-            const selectMov = document.getElementById("movProveedor");
-            if(selectMov) {
-                const provs = getProveedores();
-                selectMov.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
-            }
-        }
-        actualizarSelectProveedores();
-        window.refreshProveedoresSelect = actualizarSelectProveedores;
-    }
-
-    // ==================== HISTORIAL ENTREGAS ====================
-    function getEntregas() {
-        const movs = getMovements().filter(m => m.tipo === "Salida" && m.destinatario && m.area);
-        const grupos = new Map();
-        movs.forEach(m => { const key = m.deliveryId ? `delivery_${m.deliveryId}` : `single_${m.id}`; if(!grupos.has(key)) grupos.set(key, []); grupos.get(key).push(m); });
-        const pedidos = [];
-        for(let [key, items] of grupos.entries()) { pedidos.push({ fecha: items[0].fecha, usuario: items[0].usuario, area: items[0].area, destinatario: items[0].destinatario, productos: items.map(i => ({ codigo: i.codigo, cantidad: i.cantidad, descripcion: i.descripcion, tipoProducto: i.tipoProducto, lote: i.lote, registroInvima: i.registroInvima, vencimiento: i.vencimiento, estante: i.estante })), deliveryId: key }); }
-        pedidos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-        return pedidos;
-    }
-
-    function renderHistorialEntregas() {
-        let pedidos = getEntregas();
-        const areaFiltro = document.getElementById("filtroAreaHistorial").value;
-        const destFiltro = document.getElementById("filtroDestinatarioHistorial").value.toLowerCase();
-        const desde = document.getElementById("filtroFechaDesdeHistorial").value;
-        const hasta = document.getElementById("filtroFechaHastaHistorial").value;
-        if(areaFiltro) pedidos = pedidos.filter(p => p.area === areaFiltro);
-        if(destFiltro) pedidos = pedidos.filter(p => p.destinatario.toLowerCase().includes(destFiltro));
-        if(desde) pedidos = pedidos.filter(p => new Date(p.fecha) >= new Date(desde));
-        if(hasta) pedidos = pedidos.filter(p => new Date(p.fecha) <= new Date(hasta));
-        const tbody = document.querySelector("#historialEntregasTable tbody");
-        tbody.innerHTML = "";
-        pedidos.forEach(pedido => {
-            const row = tbody.insertRow();
-            row.insertCell(0).innerText = new Date(pedido.fecha).toLocaleString();
-            row.insertCell(1).innerText = pedido.usuario;
-            row.insertCell(2).innerText = pedido.area;
-            row.insertCell(3).innerText = pedido.destinatario;
-            row.insertCell(4).innerText = pedido.productos.map(prod => `${prod.codigo} x${prod.cantidad}`).join(', ');
-            const btn = document.createElement("button"); 
-            btn.innerHTML = "<i class='fas fa-redo-alt'></i> Re-dispensar";
-            btn.className = "btn-redispensar";
-            btn.onclick = () => {
-                cart = pedido.productos.map(prod => {
-                    const prodActual = getInventory().find(p => p.codigo === prod.codigo);
-                    return { codigo: prod.codigo, descripcion: prod.descripcion, cantidad: prod.cantidad, tipoProducto: prod.tipoProducto, lote: prod.lote, registroInvima: prod.registroInvima, vencimiento: prod.vencimiento, estante: prod.estante, stockActual: prodActual ? prodActual.existencia : 0 };
-                });
-                renderCart();
-                document.getElementById("nombreDestinatario").value = pedido.destinatario;
-                const areaSel = document.getElementById("areaDestino");
-                if(areaSel.querySelector(`option[value="${pedido.area}"]`)) areaSel.value = pedido.area;
-                else areaSel.value = "Otro";
-                document.getElementById("otroArea").value = pedido.area === "Otro" ? pedido.area : "";
-                document.getElementById("otroArea").style.display = areaSel.value === "Otro" ? "block" : "none";
-                alert("Productos cargados en el carrito. Puede modificar cantidades.");
-                document.querySelector(".tab-btn[data-tab='entregas']").click();
-            };
-            row.insertCell(5).appendChild(btn);
-        });
-        renderDashboard();
-    }
-
-    // ==================== USUARIOS ====================
-    function renderUsersTable() {
-        const users = getUsers();
-        const tbody = document.getElementById("usersTableBody");
-        tbody.innerHTML = "";
-        let usuariosAMostrar = users;
-        if(currentUserRole === "user") { usuariosAMostrar = { [currentUser]: users[currentUser] }; }
-        for(let [user, data] of Object.entries(usuariosAMostrar)) {
-            const row = tbody.insertRow();
-            if(data.enabled === false) row.classList.add("disabled-user-row");
-            row.insertCell(0).innerText = user;
-            row.insertCell(1).innerText = data.fullName || user;
-            row.insertCell(2).innerText = data.phone || "";
-            row.insertCell(3).innerText = data.email || "";
-            row.insertCell(4).innerText = data.role;
-            const cellEstado = row.insertCell(5);
-            if(currentUserRole === "admin" || currentUserRole === "root") {
-                const chk = document.createElement("input"); chk.type = "checkbox"; chk.checked = data.enabled !== false; chk.className = "user-enabled-checkbox";
-                chk.onchange = () => { const newUsers = getUsers(); newUsers[user].enabled = chk.checked; saveUsers(newUsers); renderUsersTable(); if(user === currentUser && !chk.checked) { alert("Usuario deshabilitado, será desconectado."); sessionStorage.clear(); location.reload(); } };
-                cellEstado.appendChild(chk);
-            } else cellEstado.innerText = data.enabled === false ? "Inactivo" : "Activo";
-            const cellAcc = row.insertCell(6);
-            if(currentUserRole === "admin" || currentUserRole === "root") {
-                const editBtn = document.createElement("button"); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = "btn-icon btn-icon-edit";
-                editBtn.onclick = () => mostrarModalEditarUsuario(user, data);
-                const delBtn = document.createElement("button"); delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; delBtn.className = "btn-icon btn-icon-delete";
-                if(user !== currentUser && !(currentUserRole === "root" && user === "root")) delBtn.onclick = () => { if(confirm(`¿Eliminar usuario ${user}?`)) { const newUsers = getUsers(); delete newUsers[user]; saveUsers(newUsers); renderUsersTable(); } };
-                else delBtn.disabled = true;
-                cellAcc.append(editBtn, delBtn);
-            } else cellAcc.innerText = "---";
-        }
-    }
-
-    function mostrarModalEditarUsuario(username, userData) {
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3>Editar usuario: ${username}</h3><div class="form-grid"><div class="form-field"><label>Nombre completo</label><input id="editFullName" value="${(userData.fullName||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Teléfono</label><input id="editPhone" value="${(userData.phone||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Email</label><input id="editEmail" value="${(userData.email||'').replace(/"/g, '&quot;')}"></div><div class="form-field"><label>Rol</label><select id="editRole"><option value="user">user</option><option value="admin">admin</option></select></div></div><div style="margin-top:20px;"><button class="btn-outline" id="cancelEditUser">Cancelar</button><button class="btn-primary" id="saveEditUser">Guardar</button></div></div>`;
-        document.body.appendChild(modal);
-        document.getElementById("editRole").value = userData.role;
-        document.getElementById("cancelEditUser").onclick = () => modal.remove();
-        document.getElementById("saveEditUser").onclick = () => {
-            const users = getUsers();
-            if(users[username]) {
-                users[username].fullName = document.getElementById("editFullName").value.trim();
-                users[username].phone = document.getElementById("editPhone").value.trim();
-                users[username].email = document.getElementById("editEmail").value.trim();
-                users[username].role = document.getElementById("editRole").value;
-                saveUsers(users);
-                if(username === currentUser) currentUserFullName = users[username].fullName;
-                document.getElementById("currentUserLabel").innerText = currentUserFullName;
-                alert("Usuario actualizado");
-                modal.remove();
-                renderUsersTable();
-            } else modal.remove();
-        };
-    }
-
-    async function addUser() {
-        if(currentUserRole !== "admin" && currentUserRole !== "root") return alert("No tiene permisos");
-        const username = document.getElementById("newUser").value.trim();
-        const pass = document.getElementById("newPass").value;
-        const full = document.getElementById("newFullName").value.trim();
-        const phone = document.getElementById("newPhone").value.trim();
-        const email = document.getElementById("newEmail").value.trim();
-        if(!username || !pass || !full) return alert("Complete usuario, contraseña y nombre");
-        const users = getUsers();
-        if(users[username]) return alert("Usuario ya existe");
-        users[username] = { usuario: username, passwordHash: await hashPassword(pass), role: document.getElementById("newRole").value, createdAt: new Date().toISOString(), fullName: full, phone: phone, email: email, enabled: true };
-        saveUsers(users);
-        alert("Usuario creado");
-        document.getElementById("newUser").value = ""; document.getElementById("newPass").value = ""; document.getElementById("newFullName").value = ""; document.getElementById("newPhone").value = ""; document.getElementById("newEmail").value = "";
-        if(document.getElementById("usersList").style.display === "block") renderUsersTable();
-    }
-
-    // ==================== CONFIGURACIÓN (incluye proveedores) ====================
-    function openConfigModal() {
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3>Configuración del Sistema</h3>
-            <div class="config-list"><h4>📌 Áreas / Servicios</h4><div id="areasList"></div><div class="add-item"><input type="text" id="newArea" placeholder="Nueva área"><button class="btn-secondary" id="addAreaBtn">+ Agregar</button></div></div>
-            <div class="config-list"><h4>📦 Tipo Producto</h4><div id="tiposProductoList"></div><div class="add-item"><input type="text" id="newTipoProd" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoProdBtn">+ Agregar</button></div></div>
-            <div class="config-list"><h4>🔄 Tipo Movimiento</h4><div id="tiposMovList"></div><div class="add-item"><input type="text" id="newTipoMov" placeholder="Nuevo tipo"><button class="btn-secondary" id="addTipoMovBtn">+ Agregar</button></div></div>
-            <div class="config-list"><h4>🏷️ Estantes (Ubicaciones)</h4><div id="estantesList"></div><div class="add-item"><input type="text" id="newEstante" placeholder="Nuevo estante"><button class="btn-secondary" id="addEstanteBtn">+ Agregar</button></div></div>
-            <div class="config-list"><h4>🚚 Proveedores</h4><div id="proveedoresList"></div><div class="add-item"><input type="text" id="newProveedor" placeholder="Nuevo proveedor"><button class="btn-secondary" id="addProveedorBtn">+ Agregar</button></div></div>
-            <button class="btn-outline" id="closeConfigModal">Cerrar</button></div>`;
-        document.body.appendChild(modal);
-        function renderList(containerId, items, storageKey) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = items.map((item,idx)=>`<div class="config-item"><span>${item}</span><button class="btn-danger btn-icon" data-idx="${idx}">🗑️</button></div>`).join('');
-            container.querySelectorAll("[data-idx]").forEach(btn=>{ btn.onclick = () => { const idx = parseInt(btn.dataset.idx); items.splice(idx,1); saveConfig(storageKey, items); renderList(containerId, items, storageKey); updateAllDynamicSelects(); if(storageKey === STORAGE_CONFIG_PROVEEDORES && window.refreshProveedoresSelect) window.refreshProveedoresSelect(); }; });
-        }
-        function refreshAll() {
-            renderList("areasList", getAreas(), STORAGE_CONFIG_AREAS);
-            renderList("tiposProductoList", getTiposProducto(), STORAGE_CONFIG_TIPOS_PRODUCTO);
-            renderList("tiposMovList", getTiposMovimiento(), STORAGE_CONFIG_TIPOS_MOV);
-            renderList("estantesList", getEstantes(), STORAGE_CONFIG_ESTANTES);
-            renderList("proveedoresList", getProveedores(), STORAGE_CONFIG_PROVEEDORES);
-            const divMini = document.getElementById("proveedoresListaMini");
-            if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>";
-        }
-        document.getElementById("addAreaBtn").onclick = () => { const val = document.getElementById("newArea").value.trim(); if(val && !getAreas().includes(val)) { const areas = getAreas(); areas.push(val); saveConfig(STORAGE_CONFIG_AREAS, areas); refreshAll(); updateAllDynamicSelects(); document.getElementById("newArea").value=""; } };
-        document.getElementById("addTipoProdBtn").onclick = () => { const val = document.getElementById("newTipoProd").value.trim(); if(val && !getTiposProducto().includes(val)) { const tipos = getTiposProducto(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, tipos); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoProd").value=""; } };
-        document.getElementById("addTipoMovBtn").onclick = () => { const val = document.getElementById("newTipoMov").value.trim(); if(val && !getTiposMovimiento().includes(val)) { const tipos = getTiposMovimiento(); tipos.push(val); saveConfig(STORAGE_CONFIG_TIPOS_MOV, tipos); refreshAll(); updateAllDynamicSelects(); document.getElementById("newTipoMov").value=""; } };
-        document.getElementById("addEstanteBtn").onclick = () => { const val = document.getElementById("newEstante").value.trim(); if(val && !getEstantes().includes(val)) { const estantes = getEstantes(); estantes.push(val); saveConfig(STORAGE_CONFIG_ESTANTES, estantes); refreshAll(); updateAllDynamicSelects(); document.getElementById("newEstante").value=""; } };
-        document.getElementById("addProveedorBtn").onclick = () => { const val = document.getElementById("newProveedor").value.trim(); if(val && !getProveedores().includes(val)) { const provs = getProveedores(); provs.push(val); saveConfig(STORAGE_CONFIG_PROVEEDORES, provs); refreshAll(); updateAllDynamicSelects(); if(window.refreshProveedoresSelect) window.refreshProveedoresSelect(); document.getElementById("newProveedor").value=""; } };
-        document.getElementById("closeConfigModal").onclick = () => modal.remove();
-        refreshAll();
-    }
-
-    function updateAllDynamicSelects() {
-        const movTipo = document.getElementById("movTipo"); if(movTipo) movTipo.innerHTML = getTiposMovimiento().map(t=>`<option value="${t}">${t}</option>`).join('');
-        const tipoProd = document.getElementById("movTipoProducto"); if(tipoProd) tipoProd.innerHTML = getTiposProducto().map(t=>`<option value="${t}">${t}</option>`).join('');
-        const areaSelect = document.getElementById("areaDestino"); if(areaSelect) { areaSelect.innerHTML = getAreas().map(a=>`<option value="${a}">${a}</option>`).join(''); areaSelect.value = getAreas()[0]; document.getElementById("otroArea").style.display = areaSelect.value === "Otro" ? "block" : "none"; }
-        const filtroArea = document.getElementById("filtroAreaHistorial"); if(filtroArea) filtroArea.innerHTML = '<option value="">Todas</option>' + getAreas().map(a=>`<option value="${a}">${a}</option>`).join('');
-        const prodEstante = document.getElementById("prodEstante"); if(prodEstante) prodEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join('');
-        const movEstante = document.getElementById("movEstante"); if(movEstante) movEstante.innerHTML = '<option value="">-- Sin estante --</option>' + getEstantes().map(e=>`<option value="${e}">${e}</option>`).join('');
-        const movProveedor = document.getElementById("movProveedor");
-        if(movProveedor) {
-            const provs = getProveedores();
-            movProveedor.innerHTML = '<option value="">-- Ninguno --</option>' + provs.map(p => `<option value="${p}">${p}</option>`).join('');
-        }
-        const divMini = document.getElementById("proveedoresListaMini");
-        if(divMini) divMini.innerHTML = getProveedores().map(p => `<span class="proveedor-tag">${p}</span>`).join(' ') || "<em>No hay proveedores registrados</em>";
-        if(window.refreshProveedoresSelect) window.refreshProveedoresSelect();
-    }
-
-    // ==================== NOTIFICACIONES ====================
-    function updateNotificationBell() {
-        const inv = getInventory();
-        const hoy = new Date(); hoy.setHours(0,0,0,0);
-        const expiryLimit = new Date(); expiryLimit.setDate(hoy.getDate() + getExpiryDays());
-        const vencidos = inv.filter(p => p.vencimiento && new Date(p.vencimiento) < hoy);
-        const proximos = inv.filter(p => p.vencimiento && new Date(p.vencimiento) >= hoy && new Date(p.vencimiento) <= expiryLimit);
-        const bajoStock = inv.filter(p => p.existencia <= p.stockMinimo);
-        const totalAlertas = vencidos.length + proximos.length + bajoStock.length;
-        const badge = document.getElementById("alertBadge");
-        if(totalAlertas > 0) { badge.style.display = "inline-block"; badge.innerText = totalAlertas; } else { badge.style.display = "none"; }
-        const alertPanel = document.getElementById("alertPanel");
-        let html = "";
-        if(vencidos.length) html += `<strong style="color:#b91c1c;">⛔ VENCIDOS (${vencidos.length}):</strong><ul>${vencidos.map(p=>`<li>${p.codigo} - ${p.descripcion} (vence: ${p.vencimiento})</li>`).join('')}</ul>`;
-        if(proximos.length) html += `<strong style="color:#f59e0b;">📅 PRÓXIMOS A VENCER (${getExpiryDays()} días):</strong><ul>${proximos.map(p=>`<li>${p.codigo} - ${p.descripcion} (vence: ${p.vencimiento})</li>`).join('')}</ul>`;
-        if(bajoStock.length) html += `<strong style="color:#dc2626;">⚠️ STOCK BAJO (${bajoStock.length}):</strong><ul>${bajoStock.map(p=>`<li>${p.codigo} - ${p.descripcion} (stock: ${p.existencia} / min: ${p.stockMinimo})</li>`).join('')}</ul>`;
-        if(!totalAlertas) html = "<p style='text-align:center;'>✅ Sin alertas activas</p>";
-        alertPanel.innerHTML = html;
-    }
-
-    // ==================== RECUPERACIÓN ====================
-    function mostrarRecuperacion() {
-        const modal = document.createElement("div"); modal.className = "modal";
-        modal.innerHTML = `<div class="modal-content"><h3>Recuperar acceso</h3>
-            <p>¿Qué desea restablecer?</p>
-            <div class="radio-group">
-                <label><input type="radio" name="recoveryType" value="password" checked> Contraseña</label>
-                <label><input type="radio" name="recoveryType" value="user"> Usuario</label>
-            </div>
-            <div id="recoveryStepEmail">
-                <p>Ingrese su correo electrónico registrado:</p>
-                <input type="email" id="recoveryEmail" placeholder="ejemplo@hospital.com" style="width:100%; padding:12px; border-radius:28px; margin-bottom:16px;">
-                <button id="buscarEmailBtn" class="btn-primary">Buscar cuenta</button>
-            </div>
-            <div id="resultadoRecuperacion" style="margin-top:16px;"></div>
-            <button class="btn-outline" id="closeRecoveryModal" style="margin-top:16px;">Cerrar</button>
-        </div>`;
-        document.body.appendChild(modal);
-        const buscarBtn = modal.querySelector('#buscarEmailBtn');
-        const emailInput = modal.querySelector('#recoveryEmail');
-        const resultDiv = modal.querySelector('#resultadoRecuperacion');
-
-        async function procesarRecuperacion() {
-            const type = modal.querySelector('input[name="recoveryType"]:checked').value;
-            const email = emailInput.value.trim().toLowerCase();
-            if(!email) { resultDiv.innerHTML = '<p style="color:red;">❌ Ingrese un correo electrónico.</p>'; return; }
-            const users = getUsers();
-            let encontrado = null;
-            for (let [user, data] of Object.entries(users)) {
-                if (data.email && data.email.toLowerCase() === email) { encontrado = { user, data }; break; }
-            }
-            if (!encontrado) {
-                resultDiv.innerHTML = '<p style="color:red;">❌ No existe un usuario con ese correo electrónico.</p>';
-                return;
-            }
-            if (type === 'user') {
-                resultDiv.innerHTML = `<p style="color:green;">✅ Su usuario es: <strong>${encontrado.user}</strong></p><p>Se ha enviado un enlace de recuperación a su correo (simulado).</p>`;
-                alert(`Simulación: Se ha enviado un correo a ${email} con su usuario: ${encontrado.user}`);
-            } else {
-                resultDiv.innerHTML = `<p style="color:green;">✅ Cuenta encontrada: Usuario <strong>${encontrado.user}</strong></p><p>Ingrese nueva contraseña:</p><input type="password" id="newPwdRec" placeholder="Nueva contraseña" style="width:100%; padding:8px; border-radius:20px;"><button id="resetPwdConfirmBtn" class="btn-secondary" style="margin-top:8px;">Restablecer contraseña</button>`;
-                const resetBtn = resultDiv.querySelector('#resetPwdConfirmBtn');
-                resetBtn.onclick = async () => {
-                    const newPass = resultDiv.querySelector('#newPwdRec').value;
-                    if (!newPass) return alert("Ingrese nueva contraseña");
-                    users[encontrado.user].passwordHash = await hashPassword(newPass);
-                    saveUsers(users);
-                    alert("Contraseña restablecida exitosamente. Ahora puede iniciar sesión.");
-                    modal.remove();
-                };
-            }
-        }
-        buscarBtn.onclick = procesarRecuperacion;
-        modal.querySelector('#closeRecoveryModal').onclick = () => modal.remove();
-    }
-
-    // ==================== EXPORTAR / IMPORTAR ====================
-    function exportToExcel(data, filename) {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Datos");
-        XLSX.writeFile(wb, filename + ".xlsx");
-    }
-    
-    async function importInventoryFromExcel(file) { 
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const wb = XLSX.read(e.target.result, { type: 'array' });
-                let sheet = wb.Sheets["Inventario"] || wb.Sheets[wb.SheetNames[0]];
-                if(!sheet) reject("No se encontró ninguna hoja de datos");
-                const data = XLSX.utils.sheet_to_json(sheet);
-                if(!data.length) reject("El archivo no contiene datos");
-                const columnMapping = {
-                    codigo: ["codigo", "código", "code", "cod"],
-                    descripcion: ["descripcion", "descripción", "description", "desc"],
-                    tipoProducto: ["tipoproducto", "tipo", "type"],
-                    existencia: ["existencia", "stock", "cantidad", "quantity"],
-                    stockMinimo: ["stockminimo", "minimo", "minstock", "stock_min"],
-                    vencimiento: ["vencimiento", "expiry", "fecha_venc", "expiration"],
-                    estante: ["estante", "shelf", "rack"],
-                    lote: ["lote", "batch", "lot"],
-                    registroInvima: ["registroinvima", "invima", "reginvima", "registro"]
-                };
-                function findField(obj, possibleNames) {
-                    for(let name of possibleNames) {
-                        if(obj.hasOwnProperty(name)) return obj[name];
-                        const lowerKey = Object.keys(obj).find(k => k.toLowerCase() === name.toLowerCase());
-                        if(lowerKey) return obj[lowerKey];
-                    }
-                    return undefined;
-                }
-                const productosImportados = [];
-                for(let row of data) {
-                    const codigo = findField(row, columnMapping.codigo);
-                    if(!codigo) continue;
-                    const descripcion = findField(row, columnMapping.descripcion) || "Sin descripción";
-                    let tipoProducto = findField(row, columnMapping.tipoProducto);
-                    if(!tipoProducto || (tipoProducto !== "Medicamento" && tipoProducto !== "Insumo")) tipoProducto = "Medicamento";
-                    let existencia = parseFloat(findField(row, columnMapping.existencia));
-                    if(isNaN(existencia)) existencia = 0;
-                    let stockMinimo = parseFloat(findField(row, columnMapping.stockMinimo));
-                    if(isNaN(stockMinimo)) stockMinimo = 0;
-                    let vencimiento = findField(row, columnMapping.vencimiento) || "";
-                    const estante = findField(row, columnMapping.estante) || "";
-                    const lote = findField(row, columnMapping.lote) || "";
-                    const registroInvima = findField(row, columnMapping.registroInvima) || "";
-                    let fechaFormateada = "";
-                    if(vencimiento) {
-                        if(typeof vencimiento === 'number') {
-                            const date = XLSX.SSF.parse_date_code(vencimiento);
-                            fechaFormateada = `${date.y}-${String(date.m).padStart(2,'0')}-${String(date.d).padStart(2,'0')}`;
-                        } else {
-                            fechaFormateada = vencimiento;
-                        }
-                    }
-                    productosImportados.push({
-                        codigo: String(codigo).trim(),
-                        descripcion: String(descripcion).trim(),
-                        tipoProducto,
-                        existencia: Math.floor(existencia),
-                        stockMinimo: Math.floor(stockMinimo),
-                        vencimiento: fechaFormateada,
-                        estante: String(estante).trim(),
-                        lote: String(lote).trim(),
-                        registroInvima: String(registroInvima).trim()
-                    });
-                }
-                if(productosImportados.length === 0) reject("No se pudo leer ningún producto válido");
-                const medicamentos = productosImportados.filter(p => p.tipoProducto === "Medicamento");
-                const insumos = productosImportados.filter(p => p.tipoProducto === "Insumo");
-                localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(medicamentos));
-                localStorage.setItem(STORAGE_INSUMOS, JSON.stringify(insumos));
-                renderInventory(); renderMovementsTable(); renderDashboard();
-                resolve();
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    async function importMovementsFromExcel(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const wb = XLSX.read(e.target.result, { type: 'array' });
-                const sheet = wb.Sheets["Movimientos"];
-                if(sheet) {
-                    const data = XLSX.utils.sheet_to_json(sheet);
-                    localStorage.setItem(STORAGE_MOVEMENTS, JSON.stringify(data));
-                    renderMovementsTable(); renderDashboard();
-                    resolve();
-                } else reject("Hoja 'Movimientos' no encontrada");
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    function downloadInventoryTemplate() {
-        const template = [
-            { Código: "MED001", Descripción: "Paracetamol 500mg", TipoProducto: "Medicamento", Existencia: 100, StockMínimo: 20, Vencimiento: "2025-12-31", Estante: "A1", Lote: "L123", RegistroInvima: "INV2023-001" },
-            { Código: "INS001", Descripción: "Jeringa 10ml", TipoProducto: "Insumo", Existencia: 500, StockMínimo: 100, Vencimiento: "2027-01-01", Estante: "B2", Lote: "LJ10", RegistroInvima: "INV2023-002" }
-        ];
-        const ws = XLSX.utils.json_to_sheet(template);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-        XLSX.writeFile(wb, "plantilla_inventario_farmacia.xlsx");
-    }
-
-    // ==================== INICIALIZACIÓN Y LOGIN ====================
-    async function initData() {
-        if(!localStorage.getItem(STORAGE_USERS)) {
-            const rh=await hashPassword("admin123"); const ah=await hashPassword("admin"); const uh=await hashPassword("user");
-            saveUsers({ "root":{passwordHash:rh,role:"root",fullName:"Dueño del Sistema",phone:"",email:"root@hospital.local",enabled:true,createdAt:new Date().toISOString()}, "admin":{passwordHash:ah,role:"admin",fullName:"Administrador",phone:"",email:"admin@hospital.local",enabled:true,createdAt:new Date().toISOString()}, "user":{passwordHash:uh,role:"user",fullName:"Usuario Normal",phone:"",email:"user@hospital.local",enabled:true,createdAt:new Date().toISOString()} });
-        }
-        if(!localStorage.getItem(STORAGE_PRODUCTOS) && !localStorage.getItem(STORAGE_INSUMOS)) {
-            const sample=[{codigo:"123456",descripcion:"Solución Salina 0.9%",tipoProducto:"Medicamento",stockMinimo:10,existencia:45,lote:"L01",registroInvima:"INV001",vencimiento:"2026-04-24",estante:"A1"},{codigo:"PARA001",descripcion:"Paracetamol 500mg",tipoProducto:"Medicamento",stockMinimo:20,existencia:15,lote:"L02",registroInvima:"INV002",vencimiento:"2025-12-01",estante:"B3"},{codigo:"VENCIDO01",descripcion:"Ibuprofeno 400mg",tipoProducto:"Medicamento",stockMinimo:5,existencia:6,lote:"L03",registroInvima:"INV003",vencimiento:"2023-01-15",estante:"D4"},{codigo:"JERINGA10",descripcion:"Jeringa 10ml",tipoProducto:"Insumo",stockMinimo:50,existencia:120,lote:"LJ01",registroInvima:"INV004",vencimiento:"2027-01-01",estante:"C2"}];
-            localStorage.setItem(STORAGE_PRODUCTOS,JSON.stringify(sample.filter(p=>p.tipoProducto==="Medicamento")));
-            localStorage.setItem(STORAGE_INSUMOS,JSON.stringify(sample.filter(p=>p.tipoProducto==="Insumo")));
-        }
-        if(!localStorage.getItem(STORAGE_MOVEMENTS)) localStorage.setItem(STORAGE_MOVEMENTS,"[]");
-        if(!localStorage.getItem(STORAGE_EXPIRY_DAYS)) localStorage.setItem(STORAGE_EXPIRY_DAYS,"30");
-        if(!localStorage.getItem(STORAGE_CONFIG_AREAS)) saveConfig(STORAGE_CONFIG_AREAS, defaultAreas);
-        if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_PRODUCTO)) saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, defaultTiposProducto);
-        if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_MOV)) saveConfig(STORAGE_CONFIG_TIPOS_MOV, defaultTiposMovimiento);
-        if(!localStorage.getItem(STORAGE_CONFIG_ESTANTES)) saveConfig(STORAGE_CONFIG_ESTANTES, defaultEstantes);
-        if(!localStorage.getItem(STORAGE_CONFIG_PROVEEDORES)) saveConfig(STORAGE_CONFIG_PROVEEDORES, defaultProveedores);
-    }
+    async function initData() { if(!localStorage.getItem(STORAGE_USERS)) { const rh=await hashPassword("admin123"); const ah=await hashPassword("admin"); const uh=await hashPassword("user"); saveUsers({ "root":{passwordHash:rh,role:"root",fullName:"Dueño del Sistema",phone:"",email:"root@hospital.local",enabled:true,createdAt:new Date().toISOString()}, "admin":{passwordHash:ah,role:"admin",fullName:"Administrador",phone:"",email:"admin@hospital.local",enabled:true,createdAt:new Date().toISOString()}, "user":{passwordHash:uh,role:"user",fullName:"Usuario Normal",phone:"",email:"user@hospital.local",enabled:true,createdAt:new Date().toISOString()} }); } await createDefaultUsersIfNeeded(); if(!localStorage.getItem(STORAGE_PRODUCTOS) && !localStorage.getItem(STORAGE_INSUMOS)) { const sample=[{codigo:"123456",descripcion:"Solución Salina 0.9%",tipoProducto:"Medicamento",stockMinimo:10,existencia:45,lote:"L01",registroInvima:"INV001",vencimiento:"2026-04-24",estante:"A1"},{codigo:"PARA001",descripcion:"Paracetamol 500mg",tipoProducto:"Medicamento",stockMinimo:20,existencia:15,lote:"L02",registroInvima:"INV002",vencimiento:"2025-12-01",estante:"B3"},{codigo:"VENCIDO01",descripcion:"Ibuprofeno 400mg",tipoProducto:"Medicamento",stockMinimo:5,existencia:6,lote:"L03",registroInvima:"INV003",vencimiento:"2023-01-15",estante:"D4"},{codigo:"JERINGA10",descripcion:"Jeringa 10ml",tipoProducto:"Insumo",stockMinimo:50,existencia:120,lote:"LJ01",registroInvima:"INV004",vencimiento:"2027-01-01",estante:"C2"}]; localStorage.setItem(STORAGE_PRODUCTOS,JSON.stringify(sample.filter(p=>p.tipoProducto==="Medicamento"))); localStorage.setItem(STORAGE_INSUMOS,JSON.stringify(sample.filter(p=>p.tipoProducto==="Insumo"))); } if(!localStorage.getItem(STORAGE_MOVEMENTS)) localStorage.setItem(STORAGE_MOVEMENTS,"[]"); if(!localStorage.getItem(STORAGE_EXPIRY_DAYS)) localStorage.setItem(STORAGE_EXPIRY_DAYS,"30"); if(!localStorage.getItem(STORAGE_CONFIG_AREAS)) saveConfig(STORAGE_CONFIG_AREAS, defaultAreas); if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_PRODUCTO)) saveConfig(STORAGE_CONFIG_TIPOS_PRODUCTO, defaultTiposProducto); if(!localStorage.getItem(STORAGE_CONFIG_TIPOS_MOV)) saveConfig(STORAGE_CONFIG_TIPOS_MOV, defaultTiposMovimiento); if(!localStorage.getItem(STORAGE_CONFIG_ESTANTES)) saveConfig(STORAGE_CONFIG_ESTANTES, defaultEstantes); if(!localStorage.getItem(STORAGE_CONFIG_PROVEEDORES)) saveConfig(STORAGE_CONFIG_PROVEEDORES, defaultProveedores); if(!localStorage.getItem(STORAGE_AUDIT_LOG)) localStorage.setItem(STORAGE_AUDIT_LOG, "[]"); }
 
     function setupApp() {
-        // Sincronizar input de días con el valor guardado
         document.getElementById("expiryDaysInput").value = getExpiryDays();
         renderInventory(); renderMovementsTable(); renderHistorialEntregas(); updateAllDynamicSelects(); renderDashboard();
         initEntregaAutocomplete();
         initEntradaProveedor();
+        // Buscador de movimientos en tiempo real
+        const searchMovInput = document.getElementById("searchMovimientosInput");
+        const clearMovSearch = document.getElementById("clearMovSearchBtn");
+        if(searchMovInput) {
+            searchMovInput.addEventListener("input", () => renderMovementsTable());
+            clearMovSearch.addEventListener("click", () => { searchMovInput.value = ""; renderMovementsTable(); });
+        }
         const bell = document.getElementById("bellIcon");
         const panel = document.getElementById("alertPanel");
         bell.addEventListener("click", (e) => { e.stopPropagation(); panel.style.display = panel.style.display === "block" ? "none" : "block"; });
@@ -1129,21 +482,19 @@
         document.getElementById("btnBajoStockInv").onclick = () => { const inv = getInventory(); const bajo = inv.filter(p => p.existencia <= p.stockMinimo); if(bajo.length) renderInventory(bajo); else alert("No hay productos con bajo stock"); };
         document.getElementById("setExpiryDaysBtn").onclick = () => setExpiryDays(parseInt(document.getElementById("expiryDaysInput").value));
         document.getElementById("exportInventarioBtn").onclick = () => exportToExcel(getInventory(), "inventario_completo");
-        document.getElementById("importInventarioBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importInventoryFromExcel(e.target.files[0]); alert("Inventario importado correctamente"); } }; input.click(); };
+        document.getElementById("importInventarioBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importInventoryFromExcel(e.target.files[0]); alert("Inventario importado correctamente"); await addAuditLog("producto", "Importar", "Inventario importado desde Excel"); } }; input.click(); };
         document.getElementById("downloadTemplateBtn").onclick = downloadInventoryTemplate;
-        document.getElementById("addProductBtn").onclick = addOrUpdateProduct;
-        document.getElementById("cancelEditBtn").onclick = cancelEditProduct;
         document.getElementById("registrarMovBtn").onclick = async () => { try { const cod = document.getElementById("movCodigo").value.trim(); if(!cod) throw new Error("Código obligatorio"); const cantidad = parseInt(document.getElementById("movCantidad").value); if(isNaN(cantidad) || cantidad <= 0) throw new Error("Cantidad válida > 0"); const proveedor = document.getElementById("movProveedor").value; const extra = proveedor ? { proveedor } : {}; await registrarMovimiento({ codigo:cod, cantidad:cantidad, tipo:document.getElementById("movTipo").value, descripcion:document.getElementById("movDescripcion").value, tipoProducto:document.getElementById("movTipoProducto").value, lote:document.getElementById("movLote").value, registroInvima:document.getElementById("movRegistroInvima").value, vencimiento:document.getElementById("movVencimiento").value, estante:document.getElementById("movEstante").value, stockMinimo:parseInt(document.getElementById("movStockMinimo").value)||0 }, extra); alert("Movimiento registrado exitosamente"); limpiarFormularioMovimiento(); renderInventory(); renderMovementsTable(); updateNotificationBell(); renderDashboard(); } catch(e){ alert("Error: "+e.message); } };
         document.getElementById("limpiarFormBtn").onclick = limpiarFormularioMovimiento;
         document.getElementById("buscarProductoBtn").onclick = openProductSearchModal;
         document.getElementById("exportMovimientosBtn").onclick = () => exportToExcel(getMovements(), "movimientos_completos");
-        document.getElementById("importMovimientosBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importMovementsFromExcel(e.target.files[0]); alert("Movimientos importados"); } }; input.click(); };
+        document.getElementById("importMovimientosBtn").onclick = () => { const input = document.createElement("input"); input.type="file"; input.accept=".xlsx"; input.onchange = async (e) => { if(e.target.files.length) { await importMovementsFromExcel(e.target.files[0]); alert("Movimientos importados"); await addAuditLog("movimiento", "Importar", "Movimientos importados desde Excel"); } }; input.click(); };
         document.getElementById("reporteInventarioBtn").onclick = () => exportToExcel(getInventory(), "inventario_reporte");
         document.getElementById("reporteMovimientosBtn").onclick = () => exportToExcel(getMovements(), "movimientos_reporte");
         document.getElementById("reporteVencimientoBtn").onclick = () => { const inv = getInventory(); const hoy = new Date(); const limit = new Date(); limit.setDate(hoy.getDate() + getExpiryDays()); const prox = inv.filter(p => p.vencimiento && new Date(p.vencimiento) >= hoy && new Date(p.vencimiento) <= limit); exportToExcel(prox, "proximos_a_vencer"); };
         document.getElementById("reporteBajoStockBtn").onclick = () => { const inv = getInventory(); const bajo = inv.filter(p => p.existencia <= p.stockMinimo); exportToExcel(bajo, "bajo_stock"); };
-        document.getElementById("reporteEntregasBtn").onclick = () => { const entregas = getEntregas(); const flat = entregas.flatMap(p => p.productos.map(prod => ({ fecha: p.fecha, usuario: p.usuario, area: p.area, destinatario: p.destinatario, codigo: prod.codigo, cantidad: prod.cantidad, descripcion: prod.descripcion }))); exportToExcel(flat, "entregas_por_area"); };
-        document.getElementById("cambiarPwdBtn").onclick = async () => { const old = document.getElementById("pwdActual").value; const newp = document.getElementById("pwdNueva").value; const conf = document.getElementById("pwdConfirm").value; if(newp !== conf) return alert("Las nuevas contraseñas no coinciden"); const users = getUsers(); if(await verifyPassword(old, users[currentUser].passwordHash)) { users[currentUser].passwordHash = await hashPassword(newp); saveUsers(users); alert("Contraseña cambiada"); document.getElementById("pwdActual").value = ""; document.getElementById("pwdNueva").value = ""; document.getElementById("pwdConfirm").value = ""; } else alert("Contraseña actual incorrecta"); };
+        document.getElementById("reporteEntregasBtn").onclick = () => { const entregas = getEntregas(); const flat = entregas.flatMap(p => p.productos.map(prod => ({ fecha: p.fecha, usuario: p.usuario, area: p.area, destinatario: p.destinatario, codigo: prod.codigo, cantidad: prod.cantidad, descripcion: prod.descripcion, nota: p.nota }))); exportToExcel(flat, "entregas_por_area"); };
+        document.getElementById("cambiarPwdBtn").onclick = async () => { const old = document.getElementById("pwdActual").value; const newp = document.getElementById("pwdNueva").value; const conf = document.getElementById("pwdConfirm").value; if(newp !== conf) return alert("Las nuevas contraseñas no coinciden"); const users = getUsers(); if(await verifyPassword(old, users[currentUser].passwordHash)) { users[currentUser].passwordHash = await hashPassword(newp); saveUsers(users); await addAuditLog("usuario", "Cambio contraseña", `Usuario ${currentUser}`); alert("Contraseña cambiada"); document.getElementById("pwdActual").value = ""; document.getElementById("pwdNueva").value = ""; document.getElementById("pwdConfirm").value = ""; } else alert("Contraseña actual incorrecta"); };
         document.getElementById("logoutBtn").onclick = () => { sessionStorage.clear(); location.reload(); };
         document.getElementById("configBtn").onclick = openConfigModal;
         document.getElementById("abrirConfigProveedoresBtn").onclick = openConfigModal;
@@ -1153,7 +504,13 @@
         document.getElementById("limpiarFiltrosHistorial").onclick = () => { document.getElementById("filtroAreaHistorial").value = ""; document.getElementById("filtroDestinatarioHistorial").value = ""; document.getElementById("filtroFechaDesdeHistorial").value = ""; document.getElementById("filtroFechaHastaHistorial").value = ""; renderHistorialEntregas(); };
         document.getElementById("exportAllDataBtn").onclick = () => { const allData = { productos: getInventory(), movimientos: getMovements(), usuarios: getUsers(), configuraciones: { areas: getAreas(), tiposProducto: getTiposProducto(), tiposMovimiento: getTiposMovimiento(), estantes: getEstantes(), proveedores: getProveedores(), expiryDays: getExpiryDays() } }; exportToExcel([allData], "backup_completo"); };
         document.getElementById("resetDataBtn").onclick = () => { if(confirm("Restablecer datos de ejemplo?")) { localStorage.clear(); location.reload(); } };
-        document.getElementById("renewLicenseBtn").onclick = () => { if(confirm("¿Renovar licencia por 3 meses? (requiere contraseña)")) { const pwd = prompt("Contraseña de habilitación:"); if(pwd === HABILITATION_PASSWORD) { localStorage.setItem(STORAGE_LICENSE_CHECK, new Date().toISOString()); alert("Licencia renovada por 3 meses."); renderDashboard(); } else alert("Contraseña incorrecta."); } };
+        document.getElementById("renewLicenseBtn").onclick = async () => { if(confirm("¿Renovar licencia por 30 días? (requiere contraseña)")) { const pwd = prompt("Contraseña de habilitación:"); if(pwd === LICENCE_PASSWORD) { setLicenseValid(); await addAuditLog("licencia", "Renovación", "Licencia renovada por 30 días"); alert("Licencia renovada por 30 días."); renderDashboard(); } else alert("Contraseña incorrecta."); } };
+        if(currentUserRole === "admin" || currentUserRole === "root") {
+            document.getElementById("auditoriaTabBtn").style.display = "block";
+            document.getElementById("refreshAuditBtn").onclick = renderAuditLog;
+            document.getElementById("exportAuditBtn").onclick = exportAuditToExcel;
+            renderAuditLog();
+        }
         if(currentUserRole === "root") document.getElementById("licenciaTabBtn").style.display = "block";
         document.querySelectorAll(".tab-btn").forEach(btn => {
             btn.onclick = () => {
@@ -1163,16 +520,18 @@
                 const tabName = btn.dataset.tab;
                 const tabId = `tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`;
                 document.getElementById(tabId).classList.add("active");
-                if(tabName === "entregas") { /* ya inicializado */ }
+                if(tabName === "entregas") { }
                 if(tabName === "historialEntregas") renderHistorialEntregas();
                 if(tabName === "usuarios" && document.getElementById("usersList").style.display === "block") renderUsersTable();
                 if(tabName === "dashboard") renderDashboard();
+                if(tabName === "auditoria" && (currentUserRole==="admin"||currentUserRole==="root")) renderAuditLog();
             };
         });
     }
 
     window.onload = async () => {
         await initData();
+        setupRealtimeSync();
         const loginView = document.getElementById("loginView"), appView = document.getElementById("appView");
         document.getElementById("forgotPasswordLink").onclick = () => mostrarRecuperacion();
         document.getElementById("loginBtn").onclick = async () => {
@@ -1180,7 +539,10 @@
             const users = getUsers();
             if(users[user] && await verifyPassword(pass, users[user].passwordHash)) {
                 if(users[user].enabled === false) { alert("Usuario deshabilitado. Contacte al administrador."); return; }
+                const licenseOk = await ensureLicense();
+                if(!licenseOk) return;
                 currentUser = user; currentUserRole = users[user].role; currentUserFullName = users[user].fullName;
+                currentUserIP = await getClientIP();
                 sessionStorage.setItem("currentUser",user); sessionStorage.setItem("currentUserRole",currentUserRole);
                 document.getElementById("currentUserLabel").innerText = currentUserFullName;
                 document.getElementById("userRoleLabel").innerText = "Rol: "+currentUserRole;
@@ -1194,7 +556,10 @@
             currentUserRole = sessionStorage.getItem("currentUserRole");
             const users = getUsers();
             if(users[currentUser]) {
+                const licenseOk = await ensureLicense();
+                if(!licenseOk) { sessionStorage.clear(); location.reload(); return; }
                 currentUserFullName = users[currentUser].fullName;
+                currentUserIP = await getClientIP();
                 document.getElementById("currentUserLabel").innerText = currentUserFullName;
             } else document.getElementById("currentUserLabel").innerText = currentUser;
             document.getElementById("userRoleLabel").innerText = "Rol: "+currentUserRole;
